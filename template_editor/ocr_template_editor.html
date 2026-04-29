@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OCR 템플릿 편집기</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+:root {
+  --bg0:#11111b; --bg1:#1e1e2e; --bg2:#181825; --bg3:#313244; --bg4:#45475a; --bg5:#585b70;
+  --fg:#cdd6f4; --fg2:#a6adc8; --fg3:#6c7086;
+  --red:#f38ba8; --green:#a6e3a1; --blue:#89b4fa; --purple:#cba6f7; --peach:#fab387;
+  --teal:#94e2d5; --yellow:#f9e2af; --pink:#f5c2e7;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;background:var(--bg1);color:var(--fg);overflow:hidden;height:100vh}
+
+/* ===== 헤더 ===== */
+.header{background:var(--bg2);border-bottom:1px solid var(--bg3);padding:6px 12px;display:flex;align-items:center;gap:8px;height:44px;flex-shrink:0}
+.header h1{font-size:15px;color:var(--purple);white-space:nowrap}
+.sep{width:1px;height:22px;background:var(--bg4)}
+.btn{padding:4px 10px;font-size:11px;cursor:pointer;border:1px solid var(--bg4);border-radius:5px;background:var(--bg3);color:var(--fg);transition:all .12s;white-space:nowrap}
+.btn:hover{background:var(--bg4)}
+.btn.primary{background:var(--blue);color:var(--bg1);border-color:var(--blue);font-weight:600}
+.btn.primary:hover{background:var(--teal)}
+.btn.danger{background:var(--red);color:var(--bg1);border-color:var(--red)}
+.btn.success{background:var(--green);color:var(--bg1);border-color:var(--green);font-weight:600}
+.btn.sm{padding:2px 7px;font-size:10px}
+input[type=file]{display:none}
+.header select,.header input[type=text]{padding:3px 6px;border:1px solid var(--bg4);border-radius:4px;background:var(--bg3);color:var(--fg);font-size:11px}
+
+/* ===== 메인 ===== */
+.main{display:flex;height:calc(100vh - 44px - 24px)}
+
+/* ===== 캔버스 ===== */
+.canvas-area{flex:1;overflow:auto;background:var(--bg0);position:relative}
+.canvas-scroll{min-width:100%;min-height:100%;display:flex;justify-content:center;padding:20px}
+.canvas-wrap{position:relative;display:inline-block;cursor:crosshair;flex-shrink:0;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+.canvas-wrap canvas{position:absolute;top:0;left:0}
+#bgCanvas{position:relative}
+
+/* 줌 컨트롤 */
+.zoom-bar{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:4px;align-items:center;background:var(--bg2);border:1px solid var(--bg3);border-radius:8px;padding:4px 10px;z-index:10;opacity:.9}
+.zoom-bar:hover{opacity:1}
+.zoom-bar span{font-size:11px;color:var(--fg2);min-width:42px;text-align:center}
+
+.upload-prompt{display:flex;flex-direction:column;justify-content:center;align-items:center;height:calc(100vh - 100px);gap:14px;color:var(--fg3)}
+.upload-prompt .icon{font-size:56px}
+
+/* ===== 사이드바 ===== */
+.sidebar{width:350px;background:var(--bg2);border-left:1px solid var(--bg3);display:flex;flex-direction:column;transition:width .2s;flex-shrink:0}
+.sidebar.collapsed{width:0;overflow:hidden;border:none}
+.sidebar-toggle{position:absolute;right:0;top:50%;transform:translateY(-50%);z-index:20;background:var(--bg3);border:1px solid var(--bg4);border-right:none;border-radius:6px 0 0 6px;padding:8px 3px;cursor:pointer;color:var(--fg2);font-size:12px;writing-mode:vertical-rl}
+.sidebar-toggle:hover{background:var(--bg4)}
+
+.template-meta{padding:8px 10px;border-bottom:1px solid var(--bg3);font-size:11px}
+.template-meta .row{display:flex;gap:4px;margin-bottom:3px;align-items:center}
+.template-meta label{min-width:60px;color:var(--fg3);font-size:10px}
+.template-meta input{flex:1;padding:3px 6px;border:1px solid var(--bg4);border-radius:4px;background:var(--bg3);color:var(--fg);font-size:11px}
+
+.sidebar-toolbar{padding:6px 8px;border-bottom:1px solid var(--bg3);display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.sidebar-toolbar .title{font-size:12px;font-weight:600;color:var(--fg2);margin-right:auto}
+
+/* 필터바 */
+.filter-bar{padding:4px 8px;border-bottom:1px solid var(--bg3);display:flex;gap:4px;align-items:center}
+.filter-bar input{flex:1;padding:3px 6px;border:1px solid var(--bg4);border-radius:4px;background:var(--bg3);color:var(--fg);font-size:11px}
+.filter-bar select{padding:3px 4px;border:1px solid var(--bg4);border-radius:4px;background:var(--bg3);color:var(--fg);font-size:10px}
+
+.field-list{flex:1;overflow-y:auto;padding:6px}
+.field-card{border:1px solid var(--bg3);border-radius:6px;margin-bottom:4px;padding:8px;font-size:11px;cursor:pointer;transition:all .12s;background:var(--bg1)}
+.field-card:hover{border-color:var(--bg5)}
+.field-card.selected{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue)}
+.field-card.multi-selected{border-color:var(--yellow);box-shadow:0 0 0 1px var(--yellow)}
+.field-card.drag-over{border-top:2px solid var(--teal)}
+.field-card .top-row{display:flex;align-items:center;gap:4px;margin-bottom:4px}
+.field-card .field-num{background:var(--bg3);color:var(--fg2);border-radius:3px;padding:0 5px;font-size:10px;font-weight:600;cursor:grab}
+.field-card .field-key{flex:1;font-weight:600;color:var(--fg);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.field-card .icon-btn{background:none;border:none;color:var(--fg3);cursor:pointer;font-size:12px;padding:1px 3px;border-radius:3px}
+.field-card .icon-btn:hover{background:var(--bg4);color:var(--fg)}
+.field-card .icon-btn.del{color:var(--red)}
+.field-card .props{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.field-card .prop-row{display:flex;align-items:center;gap:3px}
+.field-card .prop-row.full{grid-column:1/-1}
+.field-card label{font-size:9px;color:var(--fg3);min-width:28px}
+.field-card input,.field-card select{flex:1;padding:2px 4px;font-size:10px;border:1px solid var(--bg4);border-radius:3px;background:var(--bg3);color:var(--fg);min-width:0}
+.field-card .bbox-row{display:flex;gap:2px;margin-top:3px}
+.field-card .bbox-row input{width:52px;text-align:center;font-size:9px;padding:1px 2px;font-family:monospace}
+.field-card .bbox-row span{font-size:9px;color:var(--fg3)}
+
+/* ===== 하단바 ===== */
+.statusbar{background:var(--bg2);border-top:1px solid var(--bg3);padding:3px 10px;font-size:10px;display:flex;gap:16px;color:var(--fg3);height:24px;align-items:center;flex-shrink:0}
+.statusbar .auto-save-dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:3px}
+.statusbar .auto-save-dot.saved{background:var(--green)}
+.statusbar .auto-save-dot.unsaved{background:var(--yellow)}
+
+/* ===== 모달 ===== */
+.modal-bg{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.55);z-index:100;justify-content:center;align-items:center}
+.modal-bg.show{display:flex}
+.modal{background:var(--bg1);border:1px solid var(--bg4);border-radius:10px;padding:16px;min-width:500px;max-width:640px;max-height:75vh;display:flex;flex-direction:column}
+.modal h3{margin-bottom:10px;color:var(--purple);font-size:14px}
+.modal .search-box{width:100%;padding:6px 10px;font-size:12px;border:1px solid var(--bg4);border-radius:5px;background:var(--bg3);color:var(--fg);margin-bottom:8px}
+.modal .list{overflow-y:auto;flex:1}
+.preset-item{padding:6px 8px;border:1px solid var(--bg3);border-radius:5px;margin-bottom:3px;cursor:pointer;transition:all .1s;display:flex;align-items:center;gap:8px}
+.preset-item:hover{background:var(--bg3);border-color:var(--bg5)}
+.preset-item.used{opacity:.3}
+.preset-item .chk{flex-shrink:0}
+.preset-item .info{flex:1;min-width:0}
+.preset-item .pk{font-weight:600;color:var(--fg);font-size:12px}
+.preset-item .pl{color:var(--fg2);font-size:11px;margin-left:4px}
+.preset-item .meta{font-size:10px;color:var(--fg3)}
+.modal .actions{display:flex;gap:6px;margin-top:10px;justify-content:flex-end}
+
+/* 단축키 모달 */
+.help-modal .help-grid{display:grid;grid-template-columns:100px 1fr;gap:4px 12px;font-size:12px}
+.help-modal .help-grid kbd{background:var(--bg3);border:1px solid var(--bg4);border-radius:3px;padding:1px 6px;font-size:11px;font-family:monospace;color:var(--fg2)}
+
+/* 미리보기 모달 */
+.preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;max-height:60vh;overflow-y:auto}
+.preview-card{background:var(--bg3);border-radius:6px;padding:6px;text-align:center}
+.preview-card canvas{max-width:100%;border:1px solid var(--bg4);border-radius:3px}
+.preview-card .label{font-size:10px;color:var(--fg2);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* 토스트 */
+.toast{position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:var(--bg3);color:var(--fg);padding:8px 18px;border-radius:8px;font-size:12px;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>OCR 템플릿 편집기</h1>
+  <div class="sep"></div>
+  <label class="btn primary" for="fileInput">파일 열기</label>
+  <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg">
+  <select id="pageSelect" style="display:none"></select>
+  <div class="sep"></div>
+  <button class="btn" onclick="loadFromFile()">불러오기</button>
+  <button class="btn success" onclick="saveToFile()">저장</button>
+  <button class="btn" onclick="exportCSV()">CSV</button>
+  <div class="sep"></div>
+  <button class="btn sm" onclick="undo()" title="Ctrl+Z">↩ Undo</button>
+  <button class="btn sm" onclick="redo()" title="Ctrl+Y">↪ Redo</button>
+  <div class="sep"></div>
+  <button class="btn sm" id="gridBtn" onclick="toggleGrid()" title="G키">Grid</button>
+  <button class="btn sm" id="numBtn" onclick="toggleNumbers()" title="N키">번호</button>
+  <button class="btn sm" onclick="showPreview()" title="P키">미리보기</button>
+  <button class="btn sm" onclick="showCompare()">비교</button>
+  <div class="sep"></div>
+  <button class="btn sm" onclick="showHelp()" title="?키">?</button>
+</div>
+
+<div class="main">
+  <div class="canvas-area" id="canvasArea">
+    <div class="upload-prompt" id="uploadPrompt">
+      <div class="icon">📄</div>
+      <p>PDF 또는 이미지 파일을 업로드하세요</p>
+      <button class="btn primary" onclick="document.getElementById('fileInput').click()">파일 선택</button>
+    </div>
+    <div class="canvas-scroll" id="canvasScroll" style="display:none">
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="bgCanvas"></canvas>
+        <canvas id="overlay"></canvas>
+      </div>
+    </div>
+    <div class="zoom-bar" id="zoomBar" style="display:none">
+      <button class="btn sm" onclick="setZoom(zoom-0.1)">−</button>
+      <button class="btn sm" onclick="setZoom(1)">맞춤</button>
+      <span id="zoomLabel">100%</span>
+      <button class="btn sm" onclick="setZoom(zoom+0.1)">+</button>
+      <button class="btn sm" onclick="setZoom(0)">원본</button>
+    </div>
+    <div class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">◀ 패널</div>
+  </div>
+
+  <div class="sidebar" id="sidebar">
+    <div class="template-meta">
+      <div class="row"><label>템플릿ID</label><input id="templateId" value="basic_direct_payment_farmer_page1_v1"></div>
+      <div class="row"><label>문서이름</label><input id="docName" value="기본직접지불금 지급대상자 등록신청서_농업인용"></div>
+    </div>
+    <div class="sidebar-toolbar">
+      <span class="title" id="fieldTitle">필드 (0)</span>
+      <button class="btn sm" onclick="openPresetModal()" title="프리셋 추가">+프리셋</button>
+      <button class="btn sm" onclick="duplicateSelected()" title="Ctrl+D">복제</button>
+      <button class="btn sm danger" onclick="deleteSelected()" title="Del">삭제</button>
+      <button class="btn sm danger" onclick="clearAll()">초기화</button>
+    </div>
+    <div class="filter-bar">
+      <input id="fieldSearch" placeholder="필드 검색..." oninput="renderFieldList()">
+      <select id="groupFilter" onchange="renderFieldList()">
+        <option value="">전체</option>
+        <option value="header">header</option>
+        <option value="applicant">applicant</option>
+        <option value="manager">manager</option>
+        <option value="other_farmer">other_farmer</option>
+        <option value="family">family</option>
+        <option value="confirm">confirm</option>
+      </select>
+    </div>
+    <div class="field-list" id="fieldList"></div>
+  </div>
+</div>
+
+<div class="statusbar">
+  <span><span class="auto-save-dot saved" id="saveDot"></span><span id="saveStatus">저장됨</span></span>
+  <span id="statusCoord">좌표: -</span>
+  <span id="statusMode">모드: 그리기</span>
+  <span id="statusPage">페이지: -</span>
+  <span id="statusInfo">필드: 0개</span>
+  <span id="statusZoom">줌: 100%</span>
+</div>
+
+<!-- 프리셋 모달 -->
+<div class="modal-bg" id="presetModal">
+  <div class="modal">
+    <h3>프리셋 필드 선택 <span style="font-size:11px;color:var(--fg3)">(다중 선택 가능)</span></h3>
+    <input class="search-box" id="presetSearch" placeholder="검색 (예: applicant, 성명, checkbox...)">
+    <div class="list" id="presetList"></div>
+    <div class="actions">
+      <span id="presetCount" style="font-size:11px;color:var(--fg3);margin-right:auto"></span>
+      <button class="btn" onclick="closePresetModal()">닫기</button>
+      <button class="btn primary" onclick="applySelectedPresets()">선택 추가</button>
+    </div>
+  </div>
+</div>
+
+<!-- 단축키 모달 -->
+<div class="modal-bg" id="helpModal">
+  <div class="modal help-modal" style="min-width:420px">
+    <h3>단축키 안내</h3>
+    <div class="help-grid" id="helpGrid"></div>
+    <div class="actions"><button class="btn" onclick="closeModal('helpModal')">닫기</button></div>
+  </div>
+</div>
+
+<!-- 미리보기 모달 -->
+<div class="modal-bg" id="previewModal">
+  <div class="modal" style="min-width:600px;max-width:800px">
+    <h3>Crop 미리보기</h3>
+    <div class="preview-grid" id="previewGrid"></div>
+    <div class="actions"><button class="btn" onclick="closeModal('previewModal')">닫기</button></div>
+  </div>
+</div>
+
+<!-- 비교 모달 -->
+<div class="modal-bg" id="compareModal">
+  <div class="modal" style="min-width:600px">
+    <h3>템플릿 비교</h3>
+    <div style="margin-bottom:8px"><label class="btn" for="compareFileInput">비교할 JSON 선택</label><input type="file" id="compareFileInput" accept=".json" style="display:none"></div>
+    <div id="compareResult" style="font-size:12px;max-height:50vh;overflow-y:auto"></div>
+    <div class="actions"><button class="btn" onclick="closeModal('compareModal')">닫기</button></div>
+  </div>
+</div>
+
+<input type="file" id="templateFileInput" accept=".json" style="display:none">
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+//  프리셋 데이터
+// ============================================================
+const FIELD_TYPES=["korean_name","resident_number","phone","account","address","number_text","date","date_or_birth","relation","text","checkbox","signature"];
+const GROUPS=["header","applicant","manager","other_farmer","family","confirm"];
+const GROUP_COLORS={header:"#9399b2",applicant:"#f38ba8",manager:"#89b4fa",other_farmer:"#cba6f7",family:"#a6e3a1",confirm:"#fab387"};
+const EXCEL_SHEET_MAP={header:"applicants",applicant:"applicants",manager:"applicants",other_farmer:"applicants",family:"family_members",confirm:"applicants"};
+const PRESETS={};
+Object.assign(PRESETS,{receipt_no:{label:"접수번호",field_type:"text",group:"header",required:false},receipt_date:{label:"접수일자",field_type:"date",group:"header",required:false},farm_business_no:{label:"농업경영체_등록번호",field_type:"number_text",group:"header",required:false},farmer_no_top:{label:"농업인_번호",field_type:"number_text",group:"header",required:false},business_info_change_date:{label:"경영정보변경일",field_type:"date",group:"header",required:false}});
+Object.assign(PRESETS,{applicant_name:{label:"등록신청인_성명",field_type:"korean_name",group:"applicant",required:true},applicant_rrn:{label:"등록신청인_주민등록번호",field_type:"resident_number",group:"applicant",required:true},applicant_account:{label:"등록신청인_계좌번호_은행명",field_type:"account",group:"applicant",required:false},applicant_address:{label:"등록신청인_주소",field_type:"address",group:"applicant",required:true},applicant_phone:{label:"등록신청인_전화번호",field_type:"phone",group:"applicant",required:false}});
+Object.assign(PRESETS,{manager_name:{label:"경영주_성명",field_type:"korean_name",group:"manager",required:false},manager_farmer_no:{label:"경영주_농업인번호",field_type:"number_text",group:"manager",required:false},manager_application_type:{label:"경영주_신청유형",field_type:"text",group:"manager",required:false},manager_address:{label:"경영주_주민등록표상주소지",field_type:"address",group:"manager",required:false},manager_village:{label:"경영주_마을명",field_type:"text",group:"manager",required:false},manager_phone:{label:"경영주_전화번호",field_type:"phone",group:"manager",required:false},livestock_farm_checked:{label:"축산농가_체크",field_type:"checkbox",group:"manager",required:false},facility_farm_checked:{label:"시설농가_체크",field_type:"checkbox",group:"manager",required:false}});
+Object.assign(PRESETS,{other_farmer_name:{label:"경영주외_성명",field_type:"korean_name",group:"other_farmer",required:false},other_farmer_birth:{label:"경영주외_생년월일",field_type:"date_or_birth",group:"other_farmer",required:false},other_farmer_no:{label:"경영주외_농업인번호",field_type:"number_text",group:"other_farmer",required:false},other_farmer_relation:{label:"경영주와의_관계",field_type:"relation",group:"other_farmer",required:false}});
+PRESETS.family_info_confirm_checked={label:"가족관계_인적정보_확인_체크",field_type:"checkbox",group:"confirm",required:false};
+for(let r=1;r<=4;r++)for(const[side,sl]of[["left","좌"],["right","우"]])for(const[suf,lab,ft]of[["relation","관계","relation"],["name","성명","korean_name"],["rrn","주민등록번호","resident_number"]])PRESETS[`family_${r}_${side}_${suf}`]={label:`가족관계_④-1_${r}행_${sl}_${lab}`,field_type:ft,group:"family",required:false};
+for(let r=1;r<=2;r++)for(const[suf,lab,ft]of[["relation","관계","relation"],["name","성명","korean_name"],["rrn","주민등록번호","resident_number"]])PRESETS[`family_separated_${r}_${suf}`]={label:`가족관계_④-2_${r}행_${lab}`,field_type:ft,group:"family",required:false};
+
+// ============================================================
+//  상태
+// ============================================================
+let pageFields = {};   // {pageNum: [field, ...]}
+let currentPage = 1;
+let selectedSet = new Set(); // 다중선택 인덱스
+let zoom = 1;          // 현재 줌 (1 = 맞춤)
+let fitScale = 1;      // 맞춤 스케일
+let origW=0, origH=0, imgW=0, imgH=0;
+let showGrid = false;
+let showNumbers = false;
+let pdfDoc = null;
+let currentFile = null;
+
+// Undo/Redo
+let undoStack = [], redoStack = [];
+const MAX_UNDO = 50;
+
+// 드래그
+let dragMode=null, drawStart=null, dragOffset={x:0,y:0}, resizeHandle=null;
+const HS=7;
+// 스냅
+const SNAP_DIST = 6;
+
+// RAF 쓰로틀
+let rafPending = false;
+
+// 자동저장
+let autoSaveTimer = null;
+let isDirty = false;
+
+// DOM
+const bgCanvas=document.getElementById('bgCanvas');
+const bgCtx=bgCanvas.getContext('2d');
+const overlay=document.getElementById('overlay');
+const ctx=overlay.getContext('2d');
+
+// ============================================================
+//  helpers
+// ============================================================
+function fields(){ return pageFields[currentPage] || (pageFields[currentPage] = []); }
+function setFields(arr){ pageFields[currentPage] = arr; }
+function selectedIdx(){ const s=[...selectedSet]; return s.length===1?s[0]:-1; }
+function r4(v){return Math.round(v*10000)/10000}
+function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v))}
+function hexA(hex,a){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgba(${r},${g},${b},${a})`}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
+function toPixel(n){return{x:n[0]*imgW,y:n[1]*imgH,w:n[2]*imgW,h:n[3]*imgH}}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2000)}
+
+function deepClone(obj){return JSON.parse(JSON.stringify(obj))}
+
+// ============================================================
+//  Undo / Redo
+// ============================================================
+function pushUndo(){
+  undoStack.push({page:currentPage,fields:deepClone(fields()),sel:[...selectedSet]});
+  if(undoStack.length>MAX_UNDO)undoStack.shift();
+  redoStack=[];
+  markDirty();
+}
+function undo(){
+  if(!undoStack.length)return;
+  const st=undoStack.pop();
+  redoStack.push({page:currentPage,fields:deepClone(fields()),sel:[...selectedSet]});
+  if(st.page!==currentPage){currentPage=st.page;renderPageIfNeeded()}
+  setFields(st.fields);selectedSet=new Set(st.sel);
+  renderFieldList();scheduleRedraw();toast('되돌림');
+}
+function redo(){
+  if(!redoStack.length)return;
+  const st=redoStack.pop();
+  undoStack.push({page:currentPage,fields:deepClone(fields()),sel:[...selectedSet]});
+  if(st.page!==currentPage){currentPage=st.page;renderPageIfNeeded()}
+  setFields(st.fields);selectedSet=new Set(st.sel);
+  renderFieldList();scheduleRedraw();toast('다시 실행');
+}
+
+// ============================================================
+//  자동저장 (localStorage)
+// ============================================================
+const LS_KEY = 'ocr_template_editor_autosave';
+function markDirty(){
+  isDirty=true;
+  document.getElementById('saveDot').className='auto-save-dot unsaved';
+  document.getElementById('saveStatus').textContent='변경됨';
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer=setTimeout(autoSave,2000);
+}
+function autoSave(){
+  try{
+    const data={pageFields:deepClone(pageFields),currentPage,templateId:document.getElementById('templateId').value,docName:document.getElementById('docName').value,ts:Date.now()};
+    localStorage.setItem(LS_KEY,JSON.stringify(data));
+    isDirty=false;
+    document.getElementById('saveDot').className='auto-save-dot saved';
+    document.getElementById('saveStatus').textContent='자동저장됨';
+  }catch(e){}
+}
+function loadAutoSave(){
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(!raw)return false;
+    const data=JSON.parse(raw);
+    if(!data.pageFields)return false;
+    const age=Date.now()-data.ts;
+    if(age>7*24*3600*1000)return false; // 7일 이상 경과
+    if(!confirm(`자동저장된 작업이 있습니다 (${new Date(data.ts).toLocaleString()}). 복원하시겠습니까?`))return false;
+    pageFields=data.pageFields;
+    currentPage=data.currentPage||1;
+    document.getElementById('templateId').value=data.templateId||'';
+    document.getElementById('docName').value=data.docName||'';
+    return true;
+  }catch(e){return false}
+}
+
+// ============================================================
+//  PDF.js
+// ============================================================
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+document.getElementById('fileInput').addEventListener('change',async(e)=>{
+  const file=e.target.files[0];if(!file)return;
+  currentFile=file;
+  if(file.name.toLowerCase().endsWith('.pdf')){
+    const buf=await file.arrayBuffer();
+    pdfDoc=await pdfjsLib.getDocument({data:buf}).promise;
+    const sel=document.getElementById('pageSelect');
+    if(pdfDoc.numPages>1){sel.style.display='';sel.innerHTML='';for(let i=1;i<=pdfDoc.numPages;i++){const o=document.createElement('option');o.value=i;o.textContent=`${i}/${pdfDoc.numPages}`;sel.appendChild(o)}sel.onchange=()=>{saveCurrent();currentPage=parseInt(sel.value);renderPDFPage(currentPage)}}else sel.style.display='none';
+    renderPDFPage(1);
+  }else{
+    pdfDoc=null;currentPage=1;
+    const url=URL.createObjectURL(file);const img=new Image();
+    img.onload=()=>{showImage(img);URL.revokeObjectURL(url)};img.src=url;
+  }
+});
+
+function saveCurrent(){/* 현재 페이지 필드는 이미 pageFields[currentPage]에 저장됨 */}
+
+async function renderPDFPage(num){
+  currentPage=num;
+  const page=await pdfDoc.getPage(num);
+  const scale=2;const vp=page.getViewport({scale});
+  bgCanvas.width=vp.width;bgCanvas.height=vp.height;
+  await page.render({canvasContext:bgCtx,viewport:vp}).promise;
+  setupCanvas(vp.width,vp.height);
+  document.getElementById('statusPage').textContent=`페이지: ${num}/${pdfDoc?pdfDoc.numPages:1}`;
+}
+
+function renderPageIfNeeded(){
+  if(pdfDoc)renderPDFPage(currentPage);
+}
+
+function showImage(img){
+  bgCanvas.width=img.naturalWidth;bgCanvas.height=img.naturalHeight;
+  bgCtx.drawImage(img,0,0);setupCanvas(img.naturalWidth,img.naturalHeight);
+  document.getElementById('statusPage').textContent='페이지: 1/1';
+}
+
+function setupCanvas(w,h){
+  origW=w;origH=h;
+  const area=document.getElementById('canvasArea');
+  const maxW=area.clientWidth-60;
+  fitScale=Math.min(1,maxW/w);
+  zoom=fitScale; // 초기: 맞춤
+  applyZoom();
+  document.getElementById('uploadPrompt').style.display='none';
+  document.getElementById('canvasScroll').style.display='';
+  document.getElementById('zoomBar').style.display='';
+  selectedSet.clear();
+  renderFieldList();scheduleRedraw();
+}
+
+function setZoom(z){
+  if(z===0)z=1; // 원본 100%
+  zoom=clamp(z,0.2,3);
+  applyZoom();
+}
+function applyZoom(){
+  const dw=Math.floor(origW*zoom);const dh=Math.floor(origH*zoom);
+  bgCanvas.style.width=dw+'px';bgCanvas.style.height=dh+'px';
+  overlay.width=dw;overlay.height=dh;
+  overlay.style.width=dw+'px';overlay.style.height=dh+'px';
+  imgW=dw;imgH=dh;
+  document.getElementById('zoomLabel').textContent=Math.round(zoom*100)+'%';
+  document.getElementById('statusZoom').textContent='줌: '+Math.round(zoom*100)+'%';
+  scheduleRedraw();
+}
+
+// Ctrl+스크롤 줌
+document.getElementById('canvasArea').addEventListener('wheel',(e)=>{
+  if(e.ctrlKey||e.metaKey){e.preventDefault();setZoom(zoom+(e.deltaY<0?0.1:-0.1))}
+},{passive:false});
+
+// ============================================================
+//  캔버스 이벤트
+// ============================================================
+overlay.addEventListener('mousedown',(e)=>{
+  const r=overlay.getBoundingClientRect();const x=e.clientX-r.left,y=e.clientY-r.top;
+  const si=selectedIdx();
+
+  // 리사이즈
+  if(si>=0){const h=hitHandle(si,x,y);if(h){pushUndo();dragMode='resize';resizeHandle=h;e.preventDefault();return}}
+
+  // 기존 박스 클릭
+  const hi=hitTest(x,y);
+  if(hi>=0){
+    if(e.shiftKey){
+      // 다중 선택 토글
+      if(selectedSet.has(hi))selectedSet.delete(hi);else selectedSet.add(hi);
+    }else if(!selectedSet.has(hi)){
+      selectedSet.clear();selectedSet.add(hi);
+    }
+    if(selectedSet.size===1){
+      pushUndo();dragMode='move';
+      const b=toPixel(fields()[hi].bbox_norm);
+      dragOffset={x:x-b.x,y:y-b.y};
+    }
+    renderFieldList();scheduleRedraw();e.preventDefault();return;
+  }
+  // 새 박스
+  selectedSet.clear();
+  dragMode='draw';drawStart={x,y};
+  renderFieldList();e.preventDefault();
+});
+
+overlay.addEventListener('mousemove',(e)=>{
+  const r=overlay.getBoundingClientRect();const x=e.clientX-r.left,y=e.clientY-r.top;
+  const nx=(x/imgW).toFixed(4),ny=(y/imgH).toFixed(4);
+  document.getElementById('statusCoord').textContent=`좌표: (${nx}, ${ny})`;
+
+  const si=selectedIdx();
+  if(si>=0&&hitHandle(si,x,y))overlay.style.cursor='nwse-resize';
+  else if(hitTest(x,y)>=0)overlay.style.cursor='move';
+  else overlay.style.cursor='crosshair';
+
+  if(dragMode==='draw'&&drawStart){
+    scheduleRedraw(()=>{
+      ctx.strokeStyle='#f5c2e7';ctx.lineWidth=2;ctx.setLineDash([5,5]);
+      ctx.strokeRect(drawStart.x,drawStart.y,x-drawStart.x,y-drawStart.y);ctx.setLineDash([]);
+    });
+    document.getElementById('statusMode').textContent='모드: 그리기 중';
+  }else if(dragMode==='move'&&si>=0){
+    const fs=fields();const b=toPixel(fs[si].bbox_norm);
+    let nx2=clamp(x-dragOffset.x,0,imgW-b.w),ny2=clamp(y-dragOffset.y,0,imgH-b.h);
+    // 스냅
+    const snap=findSnap(si,nx2,ny2,b.w,b.h);
+    nx2=snap.x;ny2=snap.y;
+    fs[si].bbox_norm=[nx2/imgW,ny2/imgH,b.w/imgW,b.h/imgH].map(r4);
+    scheduleRedraw(()=>drawSnapGuides(snap.guides));
+    document.getElementById('statusMode').textContent='모드: 이동';
+  }else if(dragMode==='resize'&&si>=0){
+    const f=fields()[si],b=toPixel(f.bbox_norm);
+    if(resizeHandle==='br')f.bbox_norm=[b.x/imgW,b.y/imgH,Math.max(10,x-b.x)/imgW,Math.max(10,y-b.y)/imgH].map(r4);
+    else if(resizeHandle==='tl'){const nw=Math.max(10,(b.x+b.w)-x),nh=Math.max(10,(b.y+b.h)-y);f.bbox_norm=[x/imgW,y/imgH,nw/imgW,nh/imgH].map(r4)}
+    else if(resizeHandle==='tr'){const nw=Math.max(10,x-b.x),nh=Math.max(10,(b.y+b.h)-y);f.bbox_norm=[b.x/imgW,y/imgH,nw/imgW,nh/imgH].map(r4)}
+    else if(resizeHandle==='bl'){const nw=Math.max(10,(b.x+b.w)-x),nh=Math.max(10,y-b.y);f.bbox_norm=[x/imgW,b.y/imgH,nw/imgW,nh/imgH].map(r4)}
+    scheduleRedraw();
+    document.getElementById('statusMode').textContent='모드: 크기조절';
+  }
+});
+
+overlay.addEventListener('mouseup',(e)=>{
+  if(dragMode==='draw'&&drawStart){
+    const r=overlay.getBoundingClientRect();const x=e.clientX-r.left,y=e.clientY-r.top;
+    const bx=Math.min(drawStart.x,x),by=Math.min(drawStart.y,y),bw=Math.abs(x-drawStart.x),bh=Math.abs(y-drawStart.y);
+    if(bw>8&&bh>8){
+      pushUndo();
+      fields().push({key:'',label:'',field_type:'text',group:'applicant',required:false,bbox_norm:[bx/imgW,by/imgH,bw/imgW,bh/imgH].map(r4)});
+      selectedSet.clear();selectedSet.add(fields().length-1);
+      renderFieldList();
+    }
+  }
+  if(dragMode==='move'||dragMode==='resize')markDirty();
+  dragMode=null;drawStart=null;resizeHandle=null;
+  document.getElementById('statusMode').textContent='모드: 그리기';
+  scheduleRedraw();
+});
+
+overlay.addEventListener('mouseleave',()=>{if(dragMode==='draw'){dragMode=null;drawStart=null;scheduleRedraw()}});
+
+// ============================================================
+//  스냅 가이드
+// ============================================================
+function findSnap(idx,x,y,w,h){
+  const guides=[];const fs=fields();
+  let sx=x,sy=y;
+  const edges_x=[x,x+w/2,x+w];
+  const edges_y=[y,y+h/2,y+h];
+  for(let i=0;i<fs.length;i++){
+    if(i===idx)continue;
+    const b=toPixel(fs[i].bbox_norm);
+    const te=[b.x,b.x+b.w/2,b.x+b.w];
+    const ty=[b.y,b.y+b.h/2,b.y+b.h];
+    for(const ex of edges_x)for(const tx2 of te){if(Math.abs(ex-tx2)<SNAP_DIST){sx=x+(tx2-ex);guides.push({type:'v',pos:tx2})}}
+    for(const ey of edges_y)for(const ty2 of ty){if(Math.abs(ey-ty2)<SNAP_DIST){sy=y+(ty2-ey);guides.push({type:'h',pos:ty2})}}
+  }
+  return{x:sx,y:sy,guides};
+}
+function drawSnapGuides(guides){
+  ctx.save();ctx.strokeStyle='var(--teal)';ctx.strokeStyle='#94e2d5';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+  for(const g of guides){
+    ctx.beginPath();
+    if(g.type==='v'){ctx.moveTo(g.pos,0);ctx.lineTo(g.pos,imgH)}
+    else{ctx.moveTo(0,g.pos);ctx.lineTo(imgW,g.pos)}
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// ============================================================
+//  키보드
+// ============================================================
+document.addEventListener('keydown',(e)=>{
+  const inInput=e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA';
+
+  if((e.ctrlKey||e.metaKey)&&e.key==='z'){e.preventDefault();undo();return}
+  if((e.ctrlKey||e.metaKey)&&e.key==='y'){e.preventDefault();redo();return}
+  if((e.ctrlKey||e.metaKey)&&e.key==='d'&&!inInput){e.preventDefault();duplicateSelected();return}
+  if((e.ctrlKey||e.metaKey)&&e.key==='a'&&!inInput){e.preventDefault();selectAll();return}
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveToFile();return}
+
+  if(inInput)return;
+  if(e.key==='Delete'||e.key==='Backspace'){deleteSelected()}
+  if(e.key==='Escape'){selectedSet.clear();renderFieldList();scheduleRedraw()}
+  if(e.key==='g'||e.key==='G')toggleGrid();
+  if(e.key==='n'||e.key==='N')toggleNumbers();
+  if(e.key==='p'||e.key==='P')showPreview();
+  if(e.key==='?')showHelp();
+
+  // 방향키 미세 이동
+  const si=selectedIdx();
+  if(si>=0&&['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){
+    e.preventDefault();pushUndo();
+    const f=fields()[si];const step=e.shiftKey?0.001:0.0005;
+    if(e.key==='ArrowLeft')f.bbox_norm[0]=r4(f.bbox_norm[0]-step);
+    if(e.key==='ArrowRight')f.bbox_norm[0]=r4(f.bbox_norm[0]+step);
+    if(e.key==='ArrowUp')f.bbox_norm[1]=r4(f.bbox_norm[1]-step);
+    if(e.key==='ArrowDown')f.bbox_norm[1]=r4(f.bbox_norm[1]+step);
+    scheduleRedraw();markDirty();
+  }
+});
+
+// ============================================================
+//  그리기 (RAF 쓰로틀)
+// ============================================================
+let extraDraw=null;
+function scheduleRedraw(extra){
+  extraDraw=extra||null;
+  if(!rafPending){rafPending=true;requestAnimationFrame(()=>{rafPending=false;redraw();if(extraDraw)extraDraw()})}
+}
+
+function redraw(){
+  const fs=fields();
+  ctx.clearRect(0,0,overlay.width,overlay.height);
+
+  // 그리드
+  if(showGrid){
+    ctx.save();ctx.strokeStyle='rgba(148,226,213,0.15)';ctx.lineWidth=1;
+    const step=imgW/10;
+    for(let x=step;x<imgW;x+=step){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,imgH);ctx.stroke()}
+    for(let y=step;y<imgH;y+=step){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(imgW,y);ctx.stroke()}
+    ctx.restore();
+  }
+
+  fs.forEach((f,i)=>{
+    const b=toPixel(f.bbox_norm);
+    const c=GROUP_COLORS[f.group]||'#9399b2';
+    const sel=selectedSet.has(i);
+
+    ctx.fillStyle=hexA(c,sel?0.25:0.1);
+    ctx.fillRect(b.x,b.y,b.w,b.h);
+    ctx.strokeStyle=sel?(selectedSet.size>1?'#f9e2af':c):c;
+    ctx.lineWidth=sel?2.5:1.5;
+    ctx.strokeRect(b.x,b.y,b.w,b.h);
+
+    // 라벨 or 번호
+    const label=showNumbers?`${i+1}`:(f.key||`필드${i+1}`);
+    ctx.font=(showNumbers?'bold 13px':'bold 11px')+' sans-serif';
+    const tw=ctx.measureText(label).width;const lh=showNumbers?18:15;
+    ctx.fillStyle=c;ctx.globalAlpha=0.9;
+    ctx.fillRect(b.x,b.y-lh-1,tw+8,lh);
+    ctx.globalAlpha=1;ctx.fillStyle='#1e1e2e';
+    ctx.fillText(label,b.x+4,b.y-(showNumbers?5:4));
+
+    if(sel&&selectedSet.size===1){drawHandle(b.x,b.y);drawHandle(b.x+b.w,b.y);drawHandle(b.x,b.y+b.h);drawHandle(b.x+b.w,b.y+b.h)}
+  });
+
+  document.getElementById('statusInfo').textContent=`필드: ${fs.length}개${selectedSet.size>0?' ('+selectedSet.size+'선택)':''}`;
+  document.getElementById('fieldTitle').textContent=`필드 (${fs.length})`;
+}
+
+function drawHandle(x,y){ctx.fillStyle='#89b4fa';ctx.strokeStyle='#1e1e2e';ctx.lineWidth=1;ctx.fillRect(x-HS/2,y-HS/2,HS,HS);ctx.strokeRect(x-HS/2,y-HS/2,HS,HS)}
+
+function hitTest(x,y){const fs=fields();for(let i=fs.length-1;i>=0;i--){const b=toPixel(fs[i].bbox_norm);if(x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h)return i}return-1}
+function hitHandle(idx,x,y){const b=toPixel(fields()[idx].bbox_norm);const d=HS+3;if(Math.abs(x-b.x)<d&&Math.abs(y-b.y)<d)return'tl';if(Math.abs(x-(b.x+b.w))<d&&Math.abs(y-b.y)<d)return'tr';if(Math.abs(x-b.x)<d&&Math.abs(y-(b.y+b.h))<d)return'bl';if(Math.abs(x-(b.x+b.w))<d&&Math.abs(y-(b.y+b.h))<d)return'br';return null}
+
+// ============================================================
+//  토글
+// ============================================================
+function toggleGrid(){showGrid=!showGrid;document.getElementById('gridBtn').style.background=showGrid?'var(--teal)':'';scheduleRedraw()}
+function toggleNumbers(){showNumbers=!showNumbers;document.getElementById('numBtn').style.background=showNumbers?'var(--teal)':'';scheduleRedraw()}
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('collapsed');const t=document.getElementById('sidebarToggle');t.textContent=document.getElementById('sidebar').classList.contains('collapsed')?'▶ 패널':'◀ 패널';setTimeout(()=>{if(origW)setZoom(zoom)},250)}
+
+// ============================================================
+//  필드 리스트
+// ============================================================
+function renderFieldList(){
+  const fl=document.getElementById('fieldList');fl.innerHTML='';
+  const fs=fields();
+  const searchVal=(document.getElementById('fieldSearch').value||'').toLowerCase();
+  const groupVal=document.getElementById('groupFilter').value;
+
+  fs.forEach((f,i)=>{
+    // 필터
+    if(searchVal&&!f.key.toLowerCase().includes(searchVal)&&!f.label.toLowerCase().includes(searchVal))return;
+    if(groupVal&&f.group!==groupVal)return;
+
+    const c=GROUP_COLORS[f.group]||'#9399b2';
+    const sel=selectedSet.has(i);
+    const card=document.createElement('div');
+    card.className='field-card'+(sel?(selectedSet.size>1?' multi-selected':' selected'):'');
+    card.style.borderLeft=`3px solid ${c}`;
+    card.draggable=true;
+    card.dataset.idx=i;
+
+    // 드래그 재정렬
+    card.addEventListener('dragstart',(e)=>{e.dataTransfer.setData('text/plain',i);card.style.opacity='0.4'});
+    card.addEventListener('dragend',()=>{card.style.opacity='1'});
+    card.addEventListener('dragover',(e)=>{e.preventDefault();card.classList.add('drag-over')});
+    card.addEventListener('dragleave',()=>{card.classList.remove('drag-over')});
+    card.addEventListener('drop',(e)=>{
+      e.preventDefault();card.classList.remove('drag-over');
+      const from=parseInt(e.dataTransfer.getData('text/plain'));const to=i;
+      if(from===to)return;
+      pushUndo();const arr=fields();const item=arr.splice(from,1)[0];arr.splice(to,0,item);
+      selectedSet.clear();selectedSet.add(to);renderFieldList();scheduleRedraw();
+    });
+
+    card.onclick=(e)=>{
+      if(['INPUT','SELECT','BUTTON'].includes(e.target.tagName))return;
+      if(e.shiftKey){if(selectedSet.has(i))selectedSet.delete(i);else selectedSet.add(i)}
+      else{selectedSet.clear();selectedSet.add(i)}
+      renderFieldList();scheduleRedraw();
+    };
+
+    const bb=f.bbox_norm;
+    card.innerHTML=`
+      <div class="top-row">
+        <span class="field-num" title="드래그로 순서 변경">${i+1}</span>
+        <span class="field-key" style="color:${c}">${f.key||'미지정'}</span>
+        <button class="icon-btn" onclick="event.stopPropagation();openPresetForField(${i})" title="프리셋">📋</button>
+        <button class="icon-btn del" onclick="event.stopPropagation();pushUndo();deleteFieldAt(${i})" title="삭제">✕</button>
+      </div>
+      <div class="props">
+        <div class="prop-row full"><label>key</label><input value="${esc(f.key)}" onchange="fields()[${i}].key=this.value;markDirty();scheduleRedraw()" placeholder="field_key"></div>
+        <div class="prop-row full"><label>라벨</label><input value="${esc(f.label)}" onchange="fields()[${i}].label=this.value;markDirty()" placeholder="라벨"></div>
+        <div class="prop-row"><label>타입</label><select onchange="fields()[${i}].field_type=this.value;markDirty()">${FIELD_TYPES.map(t=>`<option ${f.field_type===t?'selected':''}>${t}</option>`).join('')}</select></div>
+        <div class="prop-row"><label>그룹</label><select onchange="fields()[${i}].group=this.value;markDirty();renderFieldList();scheduleRedraw()">${GROUPS.map(g=>`<option ${f.group===g?'selected':''}>${g}</option>`).join('')}</select></div>
+        <div class="prop-row"><label style="min-width:auto"><input type="checkbox" ${f.required?'checked':''} onchange="fields()[${i}].required=this.checked;markDirty()"> 필수</label></div>
+      </div>
+      <div class="bbox-row">
+        <span>x</span><input value="${bb[0]}" onchange="pushUndo();fields()[${i}].bbox_norm[0]=parseFloat(this.value)||0;markDirty();scheduleRedraw()">
+        <span>y</span><input value="${bb[1]}" onchange="pushUndo();fields()[${i}].bbox_norm[1]=parseFloat(this.value)||0;markDirty();scheduleRedraw()">
+        <span>w</span><input value="${bb[2]}" onchange="pushUndo();fields()[${i}].bbox_norm[2]=parseFloat(this.value)||0;markDirty();scheduleRedraw()">
+        <span>h</span><input value="${bb[3]}" onchange="pushUndo();fields()[${i}].bbox_norm[3]=parseFloat(this.value)||0;markDirty();scheduleRedraw()">
+      </div>
+    `;
+    fl.appendChild(card);
+  });
+
+  // 선택 필드 스크롤
+  const si=selectedIdx();
+  if(si>=0){const cards=fl.querySelectorAll('.field-card');for(const c of cards)if(c.dataset.idx==si){c.scrollIntoView({block:'nearest'});break}}
+}
+
+// ============================================================
+//  필드 조작
+// ============================================================
+function deleteFieldAt(i){fields().splice(i,1);selectedSet.delete(i);const ns=new Set();selectedSet.forEach(s=>{if(s>i)ns.add(s-1);else if(s<i)ns.add(s)});selectedSet=ns;renderFieldList();scheduleRedraw();markDirty()}
+function deleteSelected(){if(selectedSet.size===0)return;pushUndo();const idxs=[...selectedSet].sort((a,b)=>b-a);for(const i of idxs)fields().splice(i,1);selectedSet.clear();renderFieldList();scheduleRedraw();markDirty();toast(`${idxs.length}개 삭제`)}
+function duplicateSelected(){
+  if(selectedSet.size===0){toast('선택된 필드 없음');return}
+  pushUndo();const fs=fields();const newIdxs=[];
+  [...selectedSet].sort((a,b)=>a-b).forEach(i=>{
+    const clone=deepClone(fs[i]);
+    clone.bbox_norm[0]=r4(clone.bbox_norm[0]+0.02);
+    clone.bbox_norm[1]=r4(clone.bbox_norm[1]+0.02);
+    clone.key=clone.key?clone.key+'_copy':'';
+    fs.push(clone);newIdxs.push(fs.length-1);
+  });
+  selectedSet=new Set(newIdxs);
+  renderFieldList();scheduleRedraw();markDirty();toast(`${newIdxs.length}개 복제`);
+}
+function selectAll(){const fs=fields();selectedSet=new Set(fs.map((_,i)=>i));renderFieldList();scheduleRedraw()}
+function clearAll(){if(!confirm('이 페이지의 모든 필드를 삭제하시겠습니까?'))return;pushUndo();setFields([]);selectedSet.clear();renderFieldList();scheduleRedraw();markDirty()}
+
+// ============================================================
+//  프리셋 모달 (다중 선택)
+// ============================================================
+let presetTarget=-1; // -1: 새 추가, 0+: 기존 필드에 적용
+let presetChecked=new Set();
+
+function openPresetModal(){presetTarget=-1;presetChecked.clear();showPresetModalUI()}
+function openPresetForField(i){presetTarget=i;presetChecked.clear();showPresetModalUI()}
+
+function showPresetModalUI(){
+  document.getElementById('presetModal').classList.add('show');
+  const si=document.getElementById('presetSearch');si.value='';
+  renderPresetList('');si.focus();
+  si.oninput=(e)=>renderPresetList(e.target.value);
+}
+function closePresetModal(){document.getElementById('presetModal').classList.remove('show')}
+
+function renderPresetList(filter){
+  const cont=document.getElementById('presetList');cont.innerHTML='';
+  const fl=filter.toLowerCase();
+  const usedKeys=new Set(fields().map(f=>f.key));
+  Object.entries(PRESETS).forEach(([key,p])=>{
+    if(fl&&!key.includes(fl)&&!p.label.includes(fl)&&!p.field_type.includes(fl)&&!p.group.includes(fl))return;
+    const used=usedKeys.has(key);
+    const div=document.createElement('div');
+    div.className='preset-item'+(used?' used':'');
+    const c=GROUP_COLORS[p.group]||'#9399b2';
+    if(presetTarget>=0){
+      // 단일 선택 모드
+      div.innerHTML=`<div class="info"><span class="pk">${key}</span><span class="pl">${p.label}</span><div class="meta"><span style="color:${c}">● ${p.group}</span> · ${p.field_type}${p.required?' · <span style="color:var(--red)">필수</span>':''}${used?' · 추가됨':''}</div></div>`;
+      div.onclick=()=>{pushUndo();const f=fields()[presetTarget];f.key=key;f.label=p.label;f.field_type=p.field_type;f.group=p.group;f.required=p.required;closePresetModal();renderFieldList();scheduleRedraw();markDirty()};
+    }else{
+      // 다중 선택 모드
+      const checked=presetChecked.has(key);
+      div.innerHTML=`<input type="checkbox" class="chk" ${checked?'checked':''} onclick="event.stopPropagation()"><div class="info"><span class="pk">${key}</span><span class="pl">${p.label}</span><div class="meta"><span style="color:${c}">● ${p.group}</span> · ${p.field_type}${p.required?' · <span style="color:var(--red)">필수</span>':''}${used?' · 추가됨':''}</div></div>`;
+      const chk=div.querySelector('.chk');
+      div.onclick=(e)=>{if(e.target!==chk)chk.checked=!chk.checked;if(chk.checked)presetChecked.add(key);else presetChecked.delete(key);updatePresetCount()};
+    }
+    cont.appendChild(div);
+  });
+  updatePresetCount();
+}
+function updatePresetCount(){document.getElementById('presetCount').textContent=presetTarget>=0?'클릭하여 적용':`${presetChecked.size}개 선택됨`}
+function applySelectedPresets(){
+  if(presetChecked.size===0){toast('선택된 프리셋 없음');return}
+  pushUndo();const fs=fields();const newIdxs=[];
+  presetChecked.forEach(key=>{
+    const p=PRESETS[key];
+    fs.push({key,label:p.label,field_type:p.field_type,group:p.group,required:p.required,bbox_norm:[0.05,0.05+fs.length*0.03,0.2,0.025].map(r4)});
+    newIdxs.push(fs.length-1);
+  });
+  selectedSet=new Set(newIdxs);
+  closePresetModal();renderFieldList();scheduleRedraw();markDirty();toast(`${presetChecked.size}개 추가`);
+}
+
+// ============================================================
+//  저장 / 불러오기
+// ============================================================
+function buildTemplate(){
+  const allFields=[];
+  for(const[pg,fs]of Object.entries(pageFields)){
+    const pageNum=parseInt(pg);
+    fs.forEach(f=>{allFields.push({key:f.key,label:f.label,page:pageNum,group:f.group,field_type:f.field_type,required:f.required,bbox_norm:f.bbox_norm,excel_sheet:EXCEL_SHEET_MAP[f.group]||'applicants',excel_column:f.label})});
+  }
+  return{template_id:document.getElementById('templateId').value,document_name:document.getElementById('docName').value,page_scope:[...new Set(Object.keys(pageFields).map(Number))].sort((a,b)=>a-b),coordinate_system:"normalized",page_width:origW,page_height:origH,fields:allFields};
+}
+
+function saveToFile(){
+  const allCount=Object.values(pageFields).reduce((s,a)=>s+a.length,0);
+  if(allCount===0){toast('필드가 없습니다');return}
+  const t=buildTemplate();
+  const blob=new Blob([JSON.stringify(t,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=(t.template_id||'template')+'.json';a.click();URL.revokeObjectURL(a.href);
+  toast('저장 완료');
+}
+
+function exportCSV(){
+  const t=buildTemplate();if(t.fields.length===0){toast('필드 없음');return}
+  let csv='key,label,page,group,field_type,required,bbox_x,bbox_y,bbox_w,bbox_h,excel_sheet\n';
+  t.fields.forEach(f=>{csv+=`${f.key},${f.label},${f.page},${f.group},${f.field_type},${f.required},${f.bbox_norm.join(',')},${f.excel_sheet}\n`});
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=(t.template_id||'template')+'.csv';a.click();URL.revokeObjectURL(a.href);
+  toast('CSV 저장 완료');
+}
+
+function loadFromFile(){document.getElementById('templateFileInput').click()}
+document.getElementById('templateFileInput').addEventListener('change',(e)=>{
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=(ev)=>{
+    try{
+      const t=JSON.parse(ev.target.result);
+      document.getElementById('templateId').value=t.template_id||'';
+      document.getElementById('docName').value=t.document_name||'';
+      pageFields={};
+      (t.fields||[]).forEach(f=>{
+        const pg=f.page||1;
+        if(!pageFields[pg])pageFields[pg]=[];
+        pageFields[pg].push({key:f.key,label:f.label,field_type:f.field_type,group:f.group,required:f.required,bbox_norm:f.bbox_norm});
+      });
+      selectedSet.clear();
+      if(pdfDoc&&currentPage){}else currentPage=parseInt(Object.keys(pageFields)[0])||1;
+      renderFieldList();scheduleRedraw();
+      const total=Object.values(pageFields).reduce((s,a)=>s+a.length,0);
+      toast(`${total}개 필드 불러옴`);markDirty();
+    }catch(err){alert('JSON 파싱 오류: '+err.message)}
+  };
+  reader.readAsText(file);e.target.value='';
+});
+
+// ============================================================
+//  미리보기 (Crop)
+// ============================================================
+function showPreview(){
+  const fs=fields();if(fs.length===0||!origW){toast('표시할 필드가 없습니다');return}
+  const grid=document.getElementById('previewGrid');grid.innerHTML='';
+  fs.forEach((f,i)=>{
+    const b=f.bbox_norm;
+    const sx=b[0]*bgCanvas.width,sy=b[1]*bgCanvas.height,sw=b[2]*bgCanvas.width,sh=b[3]*bgCanvas.height;
+    const card=document.createElement('div');card.className='preview-card';
+    const cv=document.createElement('canvas');cv.width=Math.max(1,Math.round(sw));cv.height=Math.max(1,Math.round(sh));
+    const cx=cv.getContext('2d');cx.drawImage(bgCanvas,sx,sy,sw,sh,0,0,cv.width,cv.height);
+    const lb=document.createElement('div');lb.className='label';lb.textContent=`${i+1}. ${f.key||'미지정'} (${f.field_type})`;
+    card.appendChild(cv);card.appendChild(lb);grid.appendChild(card);
+  });
+  document.getElementById('previewModal').classList.add('show');
+}
+
+// ============================================================
+//  템플릿 비교
+// ============================================================
+function showCompare(){document.getElementById('compareModal').classList.add('show')}
+document.getElementById('compareFileInput').addEventListener('change',(e)=>{
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=(ev)=>{
+    try{
+      const other=JSON.parse(ev.target.result);
+      const cur=buildTemplate();
+      const result=document.getElementById('compareResult');
+      let html='<h4 style="margin-bottom:8px">비교 결과</h4>';
+
+      const curKeys=new Set(cur.fields.map(f=>f.key));
+      const otherKeys=new Set(other.fields.map(f=>f.key));
+      const added=[...curKeys].filter(k=>!otherKeys.has(k));
+      const removed=[...otherKeys].filter(k=>!curKeys.has(k));
+      const common=[...curKeys].filter(k=>otherKeys.has(k));
+
+      html+=`<p style="color:var(--green)">+ 추가됨 (${added.length}): ${added.join(', ')||'없음'}</p>`;
+      html+=`<p style="color:var(--red)">- 제거됨 (${removed.length}): ${removed.join(', ')||'없음'}</p>`;
+
+      const changes=[];
+      common.forEach(k=>{
+        const cf=cur.fields.find(f=>f.key===k);
+        const of2=other.fields.find(f=>f.key===k);
+        const diffs=[];
+        if(cf.field_type!==of2.field_type)diffs.push(`타입: ${of2.field_type}→${cf.field_type}`);
+        if(cf.group!==of2.group)diffs.push(`그룹: ${of2.group}→${cf.group}`);
+        if(JSON.stringify(cf.bbox_norm)!==JSON.stringify(of2.bbox_norm))diffs.push('위치 변경');
+        if(diffs.length)changes.push(`<b>${k}</b>: ${diffs.join(', ')}`);
+      });
+      html+=`<p style="color:var(--yellow)">~ 변경됨 (${changes.length}):</p>`;
+      if(changes.length)html+='<ul style="margin-left:16px;font-size:11px">'+changes.map(c=>`<li>${c}</li>`).join('')+'</ul>';
+      else html+='<p style="margin-left:16px;font-size:11px">없음</p>';
+      html+=`<p style="margin-top:8px;color:var(--fg3)">현재: ${cur.fields.length}개 / 비교: ${other.fields.length}개</p>`;
+      result.innerHTML=html;
+    }catch(err){alert('JSON 오류: '+err.message)}
+  };
+  reader.readAsText(file);e.target.value='';
+});
+
+// ============================================================
+//  단축키 도움말
+// ============================================================
+function showHelp(){
+  const grid=document.getElementById('helpGrid');
+  const shortcuts=[
+    ['Ctrl+Z','되돌리기 (Undo)'],['Ctrl+Y','다시 실행 (Redo)'],['Ctrl+D','선택 필드 복제'],
+    ['Ctrl+A','전체 선택'],['Ctrl+S','템플릿 저장'],['Delete','선택 삭제'],
+    ['Escape','선택 해제'],['Shift+클릭','다중 선택'],['방향키','미세 이동 (0.05%)'],
+    ['Shift+방향키','미세 이동 (0.1%)'],['Ctrl+스크롤','줌 인/아웃'],['G','그리드 토글'],
+    ['N','번호 표시 토글'],['P','Crop 미리보기'],['?','단축키 도움말'],
+  ];
+  grid.innerHTML=shortcuts.map(([k,d])=>`<kbd>${k}</kbd><span>${d}</span>`).join('');
+  document.getElementById('helpModal').classList.add('show');
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('show')}
+// 모달 배경 클릭으로 닫기
+document.querySelectorAll('.modal-bg').forEach(m=>{m.addEventListener('click',(e)=>{if(e.target===m)m.classList.remove('show')})});
+
+// ============================================================
+//  초기화
+// ============================================================
+const restored=loadAutoSave();
+if(restored){renderFieldList();scheduleRedraw()}else renderFieldList();
+</script>
+</body>
+</html>

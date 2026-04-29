@@ -1,0 +1,14 @@
+{
+  "template_id": "test_page1_v1",
+  "document_name": "기본직접지불금 테스트",
+  "page_scope": [1],
+  "coordinate_system": "normalized",
+  "page_width": 1753,
+  "page_height": 1240,
+  "fields": [
+    {"key":"applicant_name","label":"등록신청인_성명","page":1,"group":"applicant","field_type":"korean_name","required":true,"bbox_norm":[0.25,0.22,0.15,0.03],"excel_sheet":"applicants","excel_column":"등록신청인_성명"},
+    {"key":"applicant_rrn","label":"등록신청인_주민등록번호","page":1,"group":"applicant","field_type":"resident_number","required":true,"bbox_norm":[0.42,0.22,0.2,0.03],"excel_sheet":"applicants","excel_column":"등록신청인_주민등록번호"},
+    {"key":"applicant_phone","label":"등록신청인_전화번호","page":1,"group":"applicant","field_type":"phone","required":false,"bbox_norm":[0.65,0.26,0.15,0.03],"excel_sheet":"applicants","excel_column":"등록신청인_전화번호"},
+    {"key":"livestock_farm_checked","label":"축산농가_체크","page":1,"group":"manager","field_type":"checkbox","required":false,"bbox_norm":[0.79,0.29,0.025,0.025],"excel_sheet":"applicants","excel_column":"축산농가_체크"}
+  ]
+}
