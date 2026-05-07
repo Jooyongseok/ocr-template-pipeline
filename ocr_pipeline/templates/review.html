@@ -2,282 +2,101 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>OCR 검수 UI</title>
-<style>
-:root{--bg:#1e1e2e;--bg2:#181825;--bg3:#313244;--bg4:#45475a;--fg:#cdd6f4;--fg2:#a6adc8;--fg3:#6c7086;--red:#f38ba8;--green:#a6e3a1;--blue:#89b4fa;--yellow:#f9e2af;--purple:#cba6f7;--teal:#94e2d5}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Malgun Gothic',sans-serif;background:var(--bg);color:var(--fg);height:100vh;display:flex;flex-direction:column}
-.header{background:var(--bg2);border-bottom:1px solid var(--bg3);padding:8px 16px;display:flex;align-items:center;gap:12px}
-.header h1{font-size:16px;color:var(--purple)}
-.stats{display:flex;gap:16px;margin-left:auto;font-size:12px}
-.stats .stat{display:flex;align-items:center;gap:4px}
-.stats .dot{width:8px;height:8px;border-radius:50%}
-.btn{padding:5px 12px;font-size:12px;cursor:pointer;border:1px solid var(--bg4);border-radius:5px;background:var(--bg3);color:var(--fg);transition:all .15s}
-.btn:hover{background:var(--bg4)}
-.btn.primary{background:var(--blue);color:var(--bg);border-color:var(--blue)}
-.btn.success{background:var(--green);color:var(--bg);border-color:var(--green)}
-.btn.danger{background:var(--red);color:var(--bg)}
-
-.main{flex:1;display:flex;overflow:hidden}
-.list-panel{width:320px;background:var(--bg2);border-right:1px solid var(--bg3);overflow-y:auto;flex-shrink:0}
-.list-item{padding:8px 12px;border-bottom:1px solid var(--bg3);cursor:pointer;transition:background .1s}
-.list-item:hover{background:var(--bg3)}
-.list-item.active{background:var(--bg3);border-left:3px solid var(--blue)}
-.list-item.done{opacity:.4}
-.list-item .doc{font-size:10px;color:var(--fg3)}
-.list-item .field{font-size:13px;font-weight:600}
-.list-item .meta{font-size:10px;color:var(--fg3);display:flex;gap:8px;margin-top:2px}
-.list-item .conf{color:var(--yellow)}
-.list-item .status-badge{padding:1px 6px;border-radius:3px;font-size:9px}
-.status-badge.needs_review{background:var(--yellow);color:var(--bg)}
-.status-badge.low_confidence{background:var(--red);color:var(--bg)}
-.status-badge.ocr_failed{background:var(--red);color:var(--bg)}
-.status-badge.missing{background:var(--bg4);color:var(--fg)}
-.status-badge.ok{background:var(--green);color:var(--bg)}
-
-.detail-panel{flex:1;padding:20px;overflow-y:auto;display:flex;flex-direction:column;align-items:center}
-.detail-empty{display:flex;justify-content:center;align-items:center;height:100%;color:var(--fg3);font-size:14px}
-.crop-container{background:var(--bg2);border:1px solid var(--bg3);border-radius:8px;padding:16px;margin-bottom:16px;text-align:center;max-width:700px;width:100%}
-.crop-container img{max-width:100%;max-height:200px;border:1px solid var(--bg4);border-radius:4px;image-rendering:crisp-edges;background:#fff}
-.crop-label{font-size:11px;color:var(--fg3);margin-top:6px}
-
-.edit-panel{background:var(--bg2);border:1px solid var(--bg3);border-radius:8px;padding:16px;max-width:700px;width:100%}
-.edit-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.edit-row label{min-width:80px;font-size:12px;color:var(--fg2)}
-.edit-row input,.edit-row select{flex:1;padding:6px 10px;border:1px solid var(--bg4);border-radius:5px;background:var(--bg3);color:var(--fg);font-size:13px}
-.edit-row input:focus{border-color:var(--blue);outline:none}
-.edit-row .conf-bar{height:6px;border-radius:3px;flex:1;background:var(--bg4)}
-.edit-row .conf-fill{height:100%;border-radius:3px;transition:width .3s}
-
-.candidates{margin-top:8px}
-.candidates h4{font-size:11px;color:var(--fg3);margin-bottom:4px}
-.candidate-item{display:inline-block;padding:3px 10px;margin:2px;border:1px solid var(--bg4);border-radius:4px;cursor:pointer;font-size:12px;transition:all .1s}
-.candidate-item:hover{background:var(--bg4);border-color:var(--blue)}
-
-.action-bar{display:flex;gap:8px;margin-top:12px;justify-content:center}
-
-.shortcut-hint{position:fixed;bottom:8px;right:12px;font-size:10px;color:var(--fg3);background:var(--bg2);padding:4px 10px;border-radius:4px;border:1px solid var(--bg3)}
-
-.filter-bar{padding:6px 12px;border-bottom:1px solid var(--bg3);display:flex;gap:4px}
-.filter-bar select{padding:3px;font-size:10px;border:1px solid var(--bg4);border-radius:3px;background:var(--bg3);color:var(--fg)}
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OCR 검수 시스템</title>
+<link rel="stylesheet" href="/static/review.css">
 </head>
 <body>
-<div class="header">
-  <h1>OCR 검수</h1>
-  <div class="stats">
-    <div class="stat"><div class="dot" style="background:var(--yellow)"></div><span id="reviewCount">-</span> 검수</div>
-    <div class="stat"><div class="dot" style="background:var(--green)"></div><span id="doneCount">-</span> 완료</div>
-    <div class="stat"><span id="totalCount">-</span> 전체</div>
-  </div>
-  <button class="btn success" onclick="regenerateExcel()">엑셀 재생성</button>
-</div>
-<div class="main">
-  <div class="list-panel">
-    <div class="filter-bar">
-      <select id="filterStatus" onchange="renderList()">
-        <option value="">전체</option>
-        <option value="pending" selected>미처리</option>
-        <option value="ok">완료</option>
-      </select>
-      <select id="filterDoc" onchange="renderList()"><option value="">전체 문서</option></select>
+<!-- ── 상단 바 ── -->
+<header id="header">
+  <div class="header-left">
+    <h1>OCR 검수</h1>
+    <span id="batch-progress" class="progress-badge">-- / -- 문서</span>
+    <div class="progress-bar-outer small">
+      <div id="batch-progress-bar" class="progress-bar-inner" style="width:0%"></div>
     </div>
-    <div id="itemList"></div>
   </div>
-  <div class="detail-panel" id="detailPanel">
-    <div class="detail-empty">좌측에서 검수할 항목을 선택하세요</div>
+  <div class="header-center">
+    <button id="btn-prev-doc" title="이전 문서">&lt; 이전</button>
+    <span id="current-doc-label">문서 선택...</span>
+    <button id="btn-next-doc" title="다음 문서">다음 &gt;</button>
+    <select id="filter-status">
+      <option value="all">전체</option>
+      <option value="review" selected>문제만</option>
+      <option value="ok">완료</option>
+    </select>
   </div>
-</div>
-<div class="shortcut-hint">Enter: 승인 | Tab: 다음 | Shift+Tab: 이전 | Esc: 판독불가</div>
+  <div class="header-right">
+    <button id="btn-skip-doc" class="btn-danger" title="이 문서 건너뛰기">건너뛰기</button>
+    <button id="btn-export" class="btn-primary">엑셀 내보내기</button>
+    <span id="al-badge" class="al-badge" title="Active Learning 수집 건수">AL: 0</span>
+  </div>
+</header>
 
-<script>
-let items = [];
-let currentIdx = -1;
-let originalItems = []; // 원본 상태 추적
-
-async function init() {
-  const res = await fetch('/api/items');
-  const data = await res.json();
-  items = data.items;
-  originalItems = items.map(it => ({...it, originalStatus: it.status}));
-  // 문서 필터
-  const docs = [...new Set(items.map(i => i.document_id))];
-  const sel = document.getElementById('filterDoc');
-  docs.forEach(d => { const o = document.createElement('option'); o.value = d; o.textContent = d; sel.appendChild(o); });
-  updateStats();
-  renderList();
-}
-
-function updateStats() {
-  const review = items.filter(i => i.status !== 'ok').length;
-  const done = items.filter(i => i.status === 'ok').length;
-  document.getElementById('reviewCount').textContent = review;
-  document.getElementById('doneCount').textContent = done;
-  document.getElementById('totalCount').textContent = items.length;
-}
-
-function renderList() {
-  const container = document.getElementById('itemList');
-  const filterStatus = document.getElementById('filterStatus').value;
-  const filterDoc = document.getElementById('filterDoc').value;
-  container.innerHTML = '';
-
-  items.forEach((item, i) => {
-    if (filterDoc && item.document_id !== filterDoc) return;
-    if (filterStatus === 'pending' && item.status === 'ok') return;
-    if (filterStatus === 'ok' && item.status !== 'ok') return;
-
-    const div = document.createElement('div');
-    div.className = 'list-item' + (i === currentIdx ? ' active' : '') + (item.status === 'ok' ? ' done' : '');
-    div.innerHTML = `
-      <div class="doc">${item.document_id}</div>
-      <div class="field">${item.field_key}</div>
-      <div class="meta">
-        <span>${item.field_label}</span>
-        <span class="conf">${(item.confidence * 100).toFixed(0)}%</span>
-        <span class="status-badge ${item.status}">${item.status}</span>
-      </div>
-    `;
-    div.onclick = () => selectItem(i);
-    container.appendChild(div);
-  });
-}
-
-function selectItem(idx) {
-  currentIdx = idx;
-  renderList();
-  renderDetail();
-}
-
-function renderDetail() {
-  const panel = document.getElementById('detailPanel');
-  if (currentIdx < 0 || currentIdx >= items.length) {
-    panel.innerHTML = '<div class="detail-empty">항목을 선택하세요</div>';
-    return;
-  }
-  const item = items[currentIdx];
-  const confPct = (item.confidence * 100).toFixed(1);
-  const confColor = item.confidence >= 0.8 ? 'var(--green)' : item.confidence >= 0.5 ? 'var(--yellow)' : 'var(--red)';
-
-  let candidatesHtml = '';
-  if (item.candidates && item.candidates.length > 0) {
-    const cands = item.candidates.map(c => {
-      const t = c.text || String(c.value || '');
-      const conf = ((c.confidence || 0) * 100).toFixed(0);
-      return `<span class="candidate-item" onclick="document.getElementById('editValue').value='${t.replace(/'/g, "\\'")}';">${t} (${conf}%)</span>`;
-    }).join('');
-    candidatesHtml = `<div class="candidates"><h4>후보값</h4>${cands}</div>`;
-  }
-
-  panel.innerHTML = `
-    <div class="crop-container">
-      ${item.crop_image ? `<img src="data:image/png;base64,${item.crop_image}" alt="crop">` : '<p style="color:var(--fg3)">이미지 없음</p>'}
-      <div class="crop-label">${item.field_label} (${item.field_type}) — ${item.document_id}</div>
+<!-- ── 메인 ── -->
+<main id="main">
+  <!-- 왼쪽: 문서 이미지 + 필드 목록 (40%) -->
+  <section id="left-panel">
+    <div id="image-container">
+      <img id="page-image" src="" alt="문서 이미지">
+      <div id="field-overlays"></div>
     </div>
-    <div class="edit-panel">
-      <div class="edit-row">
-        <label>OCR 결과</label>
-        <input value="${esc(item.raw_text || '')}" readonly style="opacity:0.6">
-      </div>
-      <div class="edit-row">
-        <label>신뢰도</label>
-        <div class="conf-bar"><div class="conf-fill" style="width:${confPct}%;background:${confColor}"></div></div>
-        <span style="font-size:12px;min-width:45px;text-align:right;color:${confColor}">${confPct}%</span>
-      </div>
-      <div class="edit-row">
-        <label>확정값</label>
-        <input id="editValue" value="${esc(String(item.value || ''))}" autofocus>
-      </div>
-      <div class="edit-row">
-        <label>상태</label>
-        <span class="status-badge ${item.status}" style="font-size:12px;padding:2px 10px">${item.status}</span>
-        ${item.warning ? `<span style="font-size:11px;color:var(--yellow)">${item.warning}</span>` : ''}
-      </div>
-      ${candidatesHtml}
-      <div class="action-bar">
-        <button class="btn success" onclick="approve()">승인 (Enter)</button>
-        <button class="btn primary" onclick="approveAndNext()">승인+다음 (Tab)</button>
-        <button class="btn danger" onclick="markUnreadable()">판독불가 (Esc)</button>
-      </div>
+    <div id="field-list">
+      <h3>필드 목록</h3>
+      <ul id="field-list-items"></ul>
     </div>
-  `;
-  // 포커스
-  setTimeout(() => document.getElementById('editValue')?.focus(), 100);
-}
+  </section>
 
-function esc(s) { return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+  <!-- 오른쪽: 검수 패널 (60%) -->
+  <section id="right-panel">
+    <div id="empty-state" class="empty-state">
+      <p>검수할 문서를 선택하거나, 왼쪽에서 필드를 클릭하세요.</p>
+    </div>
 
-async function approve() {
-  if (currentIdx < 0) return;
-  const val = document.getElementById('editValue').value;
-  const item = items[currentIdx];
-  await updateItem(item.document_id, item.field_key, val, 'ok');
-  item.status = 'ok';
-  item.value = val;
-  updateStats();
-  renderList();
-  renderDetail();
-}
+    <div id="review-card" style="display:none">
+      <div id="crop-container">
+        <img id="crop-image" src="" alt="필드 이미지">
+      </div>
 
-async function approveAndNext() {
-  await approve();
-  goNext();
-}
+      <div class="field-info">
+        <span id="field-label" class="field-label"></span>
+        <span id="field-type-badge" class="type-badge"></span>
+        <span id="confidence-badge" class="confidence-badge"></span>
+      </div>
 
-async function markUnreadable() {
-  if (currentIdx < 0) return;
-  const item = items[currentIdx];
-  await updateItem(item.document_id, item.field_key, '', 'unknown');
-  item.status = 'unknown';
-  item.value = '';
-  updateStats();
-  renderList();
-  goNext();
-}
+      <div class="edit-row">
+        <label for="edit-input">수정:</label>
+        <input id="edit-input" type="text" placeholder="OCR 결과 수정..." autocomplete="off">
+        <button id="btn-confirm" class="btn-primary" title="확인 (Enter)">확인</button>
+        <button id="btn-skip" title="건너뛰기 (Esc)">건너뛰기</button>
+      </div>
 
-function goNext() {
-  const filterStatus = document.getElementById('filterStatus').value;
-  const filterDoc = document.getElementById('filterDoc').value;
-  for (let i = currentIdx + 1; i < items.length; i++) {
-    if (filterDoc && items[i].document_id !== filterDoc) continue;
-    if (filterStatus === 'pending' && items[i].status === 'ok') continue;
-    selectItem(i);
-    return;
-  }
-}
+      <div id="candidates-list" class="candidates">
+        <h4>후보:</h4>
+        <ul id="candidates-items"></ul>
+      </div>
 
-function goPrev() {
-  for (let i = currentIdx - 1; i >= 0; i--) {
-    selectItem(i);
-    return;
-  }
-}
+      <div id="group-section" style="display:none">
+        <h4>연관 필드 그룹</h4>
+        <ul id="group-fields"></ul>
+      </div>
 
-async function updateItem(docId, fieldKey, value, status) {
-  await fetch('/api/update', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({document_id: docId, field_key: fieldKey, value, status})
-  });
-}
+      <div id="warning-box" style="display:none" class="warning-box"></div>
+    </div>
 
-async function regenerateExcel() {
-  const res = await fetch('/api/regenerate-excel', {method: 'POST'});
-  const data = await res.json();
-  if (data.ok) alert('엑셀 재생성 완료: ' + data.path);
-  else alert('오류 발생');
-}
+    <div id="doc-progress-section">
+      <div class="progress-bar-outer">
+        <div id="doc-progress-bar" class="progress-bar-inner" style="width:0%"></div>
+      </div>
+      <span id="doc-progress-text">0/0 필드 완료</span>
+    </div>
 
-// 키보드 단축키
-document.addEventListener('keydown', (e) => {
-  if (e.target.tagName === 'SELECT') return;
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); approveAndNext(); }
-  if (e.key === 'Tab' && !e.shiftKey) { e.preventDefault(); goNext(); }
-  if (e.key === 'Tab' && e.shiftKey) { e.preventDefault(); goPrev(); }
-  if (e.key === 'Escape') { e.preventDefault(); markUnreadable(); }
-});
+    <div id="al-notification" style="display:none" class="al-notification"></div>
+  </section>
+</main>
 
-init();
-</script>
+<div id="toast-container"></div>
+
+<script src="/static/review.js"></script>
 </body>
 </html>

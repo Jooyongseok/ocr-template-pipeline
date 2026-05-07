@@ -1,6 +1,7 @@
-"""OCR 파이프라인 메인 CLI"""
+"""OCR 파이프라인 메인 CLI -- model_registry + data_store 통합"""
 import argparse
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -8,14 +9,15 @@ from pathlib import Path
 from tqdm import tqdm
 
 from crop_generator import generate_all_crops
-from ocr_engine import OCREngine
+from model_registry import ModelRegistry
 from validator import validate_result
 from excel_writer import write_excel
+from data_store import DataStore
+from field_dependency import check_dependencies
 
 
 def merge_results(batch_results: list[dict], ocr_results: list[dict]) -> list[dict]:
     """배치 결과와 OCR 결과를 문서 단위로 병합한다."""
-    # request_id → ocr_result 매핑
     result_map = {r["request_id"]: r for r in ocr_results}
 
     documents = []
@@ -30,7 +32,6 @@ def merge_results(batch_results: list[dict], ocr_results: list[dict]) -> list[di
             if not ocr:
                 continue
 
-            # 검증
             validated = validate_result(ocr, required=req.get("required", False))
 
             fields[req["field_key"]] = {
@@ -45,6 +46,8 @@ def merge_results(batch_results: list[dict], ocr_results: list[dict]) -> list[di
                 "warning": validated.get("warning"),
                 "crop_path": req["crop_path"],
                 "candidates": validated.get("candidates", []),
+                "bbox_norm": req.get("bbox_norm"),
+                "required": req.get("required", False),
             }
 
             if validated.get("status") not in ("ok", "unchecked"):
@@ -53,6 +56,13 @@ def merge_results(batch_results: list[dict], ocr_results: list[dict]) -> list[di
         source_pdf = ""
         if batch["requests"]:
             source_pdf = batch["requests"][0].get("metadata", {}).get("source_pdf", "")
+
+        # 연관성 검증
+        dep_warnings = check_dependencies(fields)
+        dep_warning_list = [
+            {"group": w.group_name, "field": w.field_key, "message": w.message}
+            for w in dep_warnings
+        ]
 
         doc_status = "ok" if review_count == 0 else "needs_review"
         documents.append({
@@ -63,19 +73,10 @@ def merge_results(batch_results: list[dict], ocr_results: list[dict]) -> list[di
             "fields": fields,
             "document_status": doc_status,
             "review_count": review_count,
+            "dependency_warnings": dep_warning_list,
         })
 
     return documents
-
-
-def save_final_json(documents: list[dict], work_dir: str):
-    """문서별 최종 JSON 저장"""
-    out_dir = Path(work_dir) / "final_json"
-    out_dir.mkdir(parents=True, exist_ok=True)
-    for doc in documents:
-        path = out_dir / f"{doc['document_id']}_extracted.json"
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(doc, f, ensure_ascii=False, indent=2)
 
 
 def save_ocr_results_jsonl(ocr_results: list[dict], work_dir: str):
@@ -112,10 +113,13 @@ def main():
     parser.add_argument("--work-dir", default="work", help="작업 디렉토리")
     parser.add_argument("--device", default="cuda:0", help="GPU 디바이스")
     parser.add_argument("--batch-size", type=int, default=32, help="배치 크기")
-    parser.add_argument("--model", default="ddobokki/ko-trocr", help="OCR 모델")
+    parser.add_argument("--model-config", default=None, help="모델 설정 YAML 경로")
+    parser.add_argument("--model-id", default=None, help="사용할 모델 ID (config에서)")
     parser.add_argument("--no-mask", action="store_true", help="개인정보 마스킹 비활성화")
     parser.add_argument("--cleanup", action="store_true", help="완료 후 crop 이미지 삭제")
     parser.add_argument("--resume", action="store_true", help="이전 결과 이어서 처리")
+    # 하위호환: --model 인자도 지원
+    parser.add_argument("--model", default=None, help="(레거시) OCR 모델 이름/경로")
     args = parser.parse_args()
 
     print("=" * 60)
@@ -140,9 +144,16 @@ def main():
         if existing:
             print(f"\n[INFO] 이전 결과 {len(existing)}개 로드됨")
 
-    # 3. OCR 실행
+    # 3. OCR 실행 -- ModelRegistry 사용
     print("\n[2/5] OCR 추론 실행 중...")
-    engine = OCREngine(model_name=args.model, device=args.device, batch_size=args.batch_size)
+    registry = ModelRegistry(args.model_config)
+
+    # 모델 정보 표시
+    model_id = args.model_id
+    engine = registry.get_engine(model_id)
+    info = engine.get_model_info()
+    print(f"  모델: {info.get('source', 'unknown')}")
+    print(f"  디바이스: {info.get('device', 'unknown')}")
 
     all_requests = []
     for batch in batch_results:
@@ -151,14 +162,13 @@ def main():
                 all_requests.append(req)
 
     if all_requests:
-        # tqdm 진행률
         ocr_results = []
-        for i in tqdm(range(0, len(all_requests), args.batch_size), desc="  OCR 배치"):
-            batch_req = all_requests[i:i + args.batch_size]
-            batch_res = engine.process_batch(batch_req)
+        batch_size = args.batch_size
+        for i in tqdm(range(0, len(all_requests), batch_size), desc="  OCR 배치"):
+            batch_req = all_requests[i:i + batch_size]
+            batch_res = registry.process_requests(batch_req, model_id)
             ocr_results.extend(batch_res)
 
-        # 기존 결과와 합치기
         for r in ocr_results:
             existing[r["request_id"]] = r
     else:
@@ -171,14 +181,20 @@ def main():
     print("\n[3/5] 중간 결과 저장...")
     save_ocr_results_jsonl(all_ocr_results, args.work_dir)
 
-    # 5. 병합 + 검증
-    print("\n[4/5] 결과 병합 + 검증...")
+    # 5. 병합 + 검증 + DataStore 저장
+    print("\n[4/5] 결과 병합 + 검증 + 저장...")
     documents = merge_results(batch_results, all_ocr_results)
-    save_final_json(documents, args.work_dir)
+
+    store = DataStore(args.work_dir)
+    for doc in documents:
+        store.save_document(doc)
 
     total_review = sum(d["review_count"] for d in documents)
     total_fields = sum(len(d["fields"]) for d in documents)
+    dep_total = sum(len(d.get("dependency_warnings", [])) for d in documents)
     print(f"  {len(documents)}개 문서, {total_fields}개 필드, {total_review}개 검수 필요")
+    if dep_total > 0:
+        print(f"  필드 연관성 경고: {dep_total}건")
 
     # 6. 엑셀 출력
     print("\n[5/5] 엑셀 출력...")
@@ -192,7 +208,7 @@ def main():
     print(f"  검수 필요: {total_review}건")
     if total_review > 0:
         print(f"\n  검수 UI 실행:")
-        print(f"    python review_server.py --work-dir {args.work_dir}")
+        print(f"    python -m ocr_pipeline.review_app --work-dir {args.work_dir}")
     print("=" * 60)
 
     # cleanup
