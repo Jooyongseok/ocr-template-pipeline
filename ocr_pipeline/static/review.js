@@ -79,10 +79,17 @@ async function loadDocuments() {
     } else {
       const emptyEl = $('#empty-state');
       emptyEl.innerHTML = `
-        <div style="text-align:center">
-          <p style="font-size:16px;margin-bottom:12px">검수할 문서가 없습니다</p>
-          <p style="font-size:13px;color:var(--subtext);margin-bottom:16px">대시보드에서 PDF를 업로드하고 OCR을 실행하세요.</p>
-          <a href="/" style="display:inline-block;padding:10px 24px;background:var(--blue);color:var(--bg);border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">대시보드로 이동</a>
+        <div style="text-align:center;max-width:400px">
+          <div style="font-size:48px;margin-bottom:16px">&#128195;</div>
+          <p style="font-size:18px;font-weight:600;margin-bottom:8px">아직 검수할 문서가 없습니다</p>
+          <p style="font-size:14px;color:var(--subtext);margin-bottom:8px">사용 방법:</p>
+          <div style="text-align:left;font-size:13px;color:var(--subtext);margin-bottom:20px;line-height:2">
+            <div>1. 대시보드에서 <b style="color:var(--text)">템플릿을 선택</b>합니다</div>
+            <div>2. <b style="color:var(--text)">PDF 파일을 업로드</b>합니다</div>
+            <div>3. <b style="color:var(--green)">OCR 실행</b> 버튼을 클릭합니다</div>
+            <div>4. 이 페이지에서 결과를 확인합니다</div>
+          </div>
+          <a href="/" style="display:inline-block;padding:12px 28px;background:var(--blue);color:var(--bg);border-radius:8px;text-decoration:none;font-size:15px;font-weight:600">대시보드로 이동하기</a>
         </div>`;
     }
   } catch (e) {

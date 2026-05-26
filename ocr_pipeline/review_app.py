@@ -268,7 +268,7 @@ def create_app(work_dir: str = "work", output_dir: str = "output") -> Flask:
     @app.route("/api/document/<doc_id>/fields")
     def api_document_fields(doc_id):
         if not SAFE_DOC_ID.match(doc_id):
-            return jsonify({"error": "잘못된 document_id"}), 400
+            return jsonify({"error": "문서 ID가 올바르지 않습니다"}), 400
 
         doc = store.get_document(doc_id)
         if doc is None:
@@ -315,7 +315,7 @@ def create_app(work_dir: str = "work", output_dir: str = "output") -> Flask:
     @app.route("/api/crop/<doc_id>/<field_key>")
     def api_crop(doc_id, field_key):
         if not SAFE_DOC_ID.match(doc_id):
-            return jsonify({"error": "잘못된 document_id"}), 400
+            return jsonify({"error": "문서 ID가 올바르지 않습니다"}), 400
 
         doc = store.get_document(doc_id)
         if doc is None:
@@ -342,7 +342,7 @@ def create_app(work_dir: str = "work", output_dir: str = "output") -> Flask:
     @app.route("/api/page-image/<doc_id>/<int:page_num>")
     def api_page_image(doc_id, page_num):
         if not SAFE_DOC_ID.match(doc_id):
-            return jsonify({"error": "잘못된 document_id"}), 400
+            return jsonify({"error": "문서 ID가 올바르지 않습니다"}), 400
 
         page_path = os.path.join(work_dir, "page_images", doc_id, f"page_{page_num:03d}.png")
         if not os.path.exists(page_path):
@@ -368,7 +368,7 @@ def create_app(work_dir: str = "work", output_dir: str = "output") -> Flask:
         new_value = data.get("value", "")
 
         if not SAFE_DOC_ID.match(doc_id):
-            return jsonify({"error": "잘못된 document_id"}), 400
+            return jsonify({"error": "문서 ID가 올바르지 않습니다"}), 400
 
         try:
             # 수정 전 원본 정보 (Active Learning용)
@@ -414,7 +414,7 @@ def create_app(work_dir: str = "work", output_dir: str = "output") -> Flask:
         reason = data.get("reason", "skipped")
 
         if not SAFE_DOC_ID.match(doc_id):
-            return jsonify({"error": "잘못된 document_id"}), 400
+            return jsonify({"error": "문서 ID가 올바르지 않습니다"}), 400
 
         doc = store.get_document(doc_id)
         if doc is None:

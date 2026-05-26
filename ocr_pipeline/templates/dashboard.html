@@ -103,8 +103,8 @@
 <!-- Nav (shared across all pages) -->
 <nav>
   <span class="logo">OCR Pipeline</span>
-  <a href="/" class="on">Dashboard</a>
-  <a href="/review">검수</a>
+  <a href="/" class="on">대시보드</a>
+  <a href="/review">검수하기</a>
   <span class="spacer"></span>
   <div class="user">
     사용자:
@@ -118,10 +118,10 @@
 
   <!-- ── 현재 상태 요약 ── -->
   <div id="activity-bar" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
-    <div class="card" style="padding:14px;text-align:center"><div style="font-size:22px;font-weight:700;color:var(--ac2)" id="act-docs">-</div><div style="font-size:11px;color:var(--tx3)">처리된 문서</div></div>
-    <div class="card" style="padding:14px;text-align:center"><div style="font-size:22px;font-weight:700;color:var(--g)" id="act-ok">-</div><div style="font-size:11px;color:var(--tx3)">완료</div></div>
-    <div class="card" style="padding:14px;text-align:center"><div style="font-size:22px;font-weight:700;color:var(--y)" id="act-review">-</div><div style="font-size:11px;color:var(--tx3)">검수 필요</div></div>
-    <div class="card" style="padding:14px;text-align:center"><div style="font-size:22px;font-weight:700;color:var(--o)" id="act-al">-</div><div style="font-size:11px;color:var(--tx3)">수정 건수 (AL)</div></div>
+    <div class="card" style="padding:14px;text-align:center"><div style="font-size:18px;margin-bottom:2px">&#128196;</div><div style="font-size:22px;font-weight:700;color:var(--ac2)" id="act-docs">-</div><div style="font-size:11px;color:var(--tx3)">처리된 문서</div></div>
+    <div class="card" style="padding:14px;text-align:center"><div style="font-size:18px;margin-bottom:2px">&#9989;</div><div style="font-size:22px;font-weight:700;color:var(--g)" id="act-ok">-</div><div style="font-size:11px;color:var(--tx3)">완료</div></div>
+    <div class="card" style="padding:14px;text-align:center"><div style="font-size:18px;margin-bottom:2px">&#128270;</div><div style="font-size:22px;font-weight:700;color:var(--y)" id="act-review">-</div><div style="font-size:11px;color:var(--tx3)">검수 필요</div></div>
+    <div class="card" style="padding:14px;text-align:center"><div style="font-size:18px;margin-bottom:2px">&#9999;</div><div style="font-size:22px;font-weight:700;color:var(--o)" id="act-al">-</div><div style="font-size:11px;color:var(--tx3)">수정 건수</div></div>
   </div>
 
   <!-- ── 저장된 템플릿 (항상 표시) ── -->
@@ -307,8 +307,12 @@ function renderFL(arr,lid){
   });
 }
 function updBtn(){
-  $('#btn-ocr').disabled=!(sF.length&&$('#sel-tpl').value);
-  $('#btn-batch').disabled=!(bF.length&&$('#sel-tpl-b').value);
+  const ocrOk=sF.length&&$('#sel-tpl').value;
+  $('#btn-ocr').disabled=!ocrOk;
+  $('#btn-ocr').title=ocrOk?'OCR을 실행합니다':(!$('#sel-tpl').value?'먼저 위에서 템플릿을 선택하세요':'PDF 파일을 업로드하세요');
+  const batchOk=bF.length&&$('#sel-tpl-b').value;
+  $('#btn-batch').disabled=!batchOk;
+  $('#btn-batch').title=batchOk?'일괄 OCR을 실행합니다':(!$('#sel-tpl-b').value?'먼저 위에서 템플릿을 선택하세요':'PDF 파일을 업로드하세요');
 }
 
 // ── Run OCR ──
