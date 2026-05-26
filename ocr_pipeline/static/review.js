@@ -77,7 +77,13 @@ async function loadDocuments() {
     if (state.documents.length > 0) {
       await selectDocument(0);
     } else {
-      $('#empty-state').textContent = '검수할 문서가 없습니다. OCR 파이프라인을 먼저 실행하세요.';
+      const emptyEl = $('#empty-state');
+      emptyEl.innerHTML = `
+        <div style="text-align:center">
+          <p style="font-size:16px;margin-bottom:12px">검수할 문서가 없습니다</p>
+          <p style="font-size:13px;color:var(--subtext);margin-bottom:16px">대시보드에서 PDF를 업로드하고 OCR을 실행하세요.</p>
+          <a href="/" style="display:inline-block;padding:10px 24px;background:var(--blue);color:var(--bg);border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">대시보드로 이동</a>
+        </div>`;
     }
   } catch (e) {
     showToast('문서 로드 실패: ' + e.message, 'error');

@@ -96,16 +96,85 @@ def create_app(work_dir: str = "work", output_dir: str = "output") -> Flask:
         user_work = os.path.join(work_dir, user_id) if user_id != "default" else work_dir
         os.makedirs(user_work, exist_ok=True)
 
-        return jsonify({
-            "ok": True,
-            "template": template_file,
-            "pdf_count": len(targets),
-            "pdfs": [os.path.basename(t) for t in targets],
-            "user_id": user_id,
-            "work_dir": user_work,
-            "message": f"{len(targets)}개 PDF에 대해 OCR을 실행합니다. CLI에서 실행하세요:\n"
-                       f"python -m ocr_pipeline.run_pipeline --template {template_path} --input {input_dir} --work-dir {user_work}",
-        })
+        # 실제 OCR 파이프라인 실행
+        try:
+            from .crop_generator import generate_crops
+            from .model_registry import ModelRegistry
+            from .validator import validate_result
+            from .field_dependency import check_dependencies
+
+            registry = ModelRegistry()
+            all_results = []
+            processed = 0
+
+            for pdf_path in targets:
+                # 1. Crop 생성
+                crop_data = generate_crops(template_path, pdf_path, user_work)
+                doc_id = crop_data["doc_id"]
+                requests_list = crop_data["requests"]
+
+                if not requests_list:
+                    continue
+
+                # 2. OCR 추론
+                ocr_results = registry.process_requests(requests_list)
+
+                # 3. 검증 + 저장
+                fields = {}
+                review_count = 0
+                for res in ocr_results:
+                    validated = validate_result(res)
+                    fk = res["field_key"]
+                    fields[fk] = {
+                        "label": res.get("field_label", fk),
+                        "field_type": res.get("field_type", "text"),
+                        "value": validated.get("value", res.get("value", "")),
+                        "raw_text": res.get("text", ""),
+                        "confidence": res.get("confidence", 0.0),
+                        "status": validated.get("status", "ok"),
+                        "warning": validated.get("warning"),
+                        "candidates": res.get("candidates", []),
+                        "bbox_norm": res.get("bbox_norm"),
+                        "crop_path": res.get("crop_path", ""),
+                        "required": res.get("required", False),
+                        "edited": False,
+                    }
+                    if validated.get("status") not in ("ok", "unchecked"):
+                        review_count += 1
+
+                # 연관성 체크
+                dep_warnings_raw = check_dependencies(fields)
+                dep_warnings = [{"group": w.group_name, "field": w.field_key, "message": w.message} for w in dep_warnings_raw]
+
+                # 저장
+                doc_data = {
+                    "document_id": doc_id,
+                    "template_id": template_file,
+                    "source_pdf": pdf_path,
+                    "fields": fields,
+                    "document_status": "needs_review" if review_count > 0 else "ok",
+                    "review_count": review_count,
+                    "dependency_warnings": dep_warnings,
+                }
+                store.save_document(doc_data)
+                processed += 1
+                all_results.append({"doc_id": doc_id, "fields": len(fields), "review": review_count})
+
+            return jsonify({
+                "ok": True,
+                "template": template_file,
+                "pdf_count": len(targets),
+                "processed": processed,
+                "results": all_results,
+                "message": f"{processed}개 문서 OCR 완료. 검수 페이지에서 결과를 확인하세요.",
+            })
+        except Exception as e:
+            import traceback
+            return jsonify({
+                "ok": False,
+                "error": f"OCR 실행 실패: {str(e)}",
+                "detail": traceback.format_exc(),
+            }), 500
 
     # ── API: 입력 PDF 목록 ──
 

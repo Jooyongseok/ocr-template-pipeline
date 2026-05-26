@@ -116,6 +116,14 @@
   <div class="sec-title">OCR 문서 추출 시스템</div>
   <div class="sec-desc">템플릿을 선택하고, PDF를 업로드하면, OCR로 텍스트를 추출하여 검수할 수 있습니다.</div>
 
+  <!-- ── 현재 상태 요약 ── -->
+  <div id="activity-bar" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
+    <div class="card" style="padding:14px;text-align:center"><div style="font-size:22px;font-weight:700;color:var(--ac2)" id="act-docs">-</div><div style="font-size:11px;color:var(--tx3)">처리된 문서</div></div>
+    <div class="card" style="padding:14px;text-align:center"><div style="font-size:22px;font-weight:700;color:var(--g)" id="act-ok">-</div><div style="font-size:11px;color:var(--tx3)">완료</div></div>
+    <div class="card" style="padding:14px;text-align:center"><div style="font-size:22px;font-weight:700;color:var(--y)" id="act-review">-</div><div style="font-size:11px;color:var(--tx3)">검수 필요</div></div>
+    <div class="card" style="padding:14px;text-align:center"><div style="font-size:22px;font-weight:700;color:var(--o)" id="act-al">-</div><div style="font-size:11px;color:var(--tx3)">수정 건수 (AL)</div></div>
+  </div>
+
   <!-- ── 저장된 템플릿 (항상 표시) ── -->
   <div class="tpl-banner">
     <h3><span class="badge">TEMPLATE</span> 저장된 템플릿 목록</h3>
@@ -179,7 +187,8 @@
       <span style="color:var(--muted);font-size:12px">터미널에서: <code style="background:var(--card);padding:2px 6px;border-radius:4px">cd template_editor && python app.py</code> 후 아래 버튼 클릭</span>
     </p>
     <div class="btn-row" style="margin-top:0;margin-bottom:20px">
-      <a href="http://localhost:5000" target="_blank" class="btn btn-p btn-lg">템플릿 편집기 열기 (포트 5000)</a>
+      <a href="http://localhost:5000" target="_blank" class="btn btn-p btn-lg" id="tpl-editor-link">템플릿 편집기 열기</a>
+      <span style="font-size:11px;color:var(--tx3);margin-left:8px">실행 중이 아니면: <code style="background:var(--c);padding:1px 5px;border-radius:3px;font-size:10px">cd template_editor && python app.py</code></span>
     </div>
 
     <hr class="div">
@@ -311,13 +320,18 @@ async function runOCR(files,tpl,stId,rvId){
   const up=await fetch('/api/upload-pdf',{method:'POST',body:fd}).then(r=>r.json());
   if(!up.ok){st.innerHTML=`<div class="st er">업로드 실패: ${up.error}</div>`;return;}
   st.innerHTML=`<div class="st ok">${up.count}개 PDF 업로드 완료</div>`;
+  st.innerHTML+=`<div class="st nfo" style="margin-top:8px">OCR 실행 중... (모델 로딩 + 추론, 시간이 걸릴 수 있습니다)</div>`;
   const uid=$('#uid').value||'default';
-  const run=await fetch('/api/run-ocr',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({template:tpl,pdf_files:up.saved,user_id:uid})}).then(r=>r.json());
-  if(run.ok){
-    st.innerHTML+=`<div class="st nfo" style="margin-top:8px"><strong>${run.pdf_count}개 PDF 준비 완료</strong><br><code style="font-size:11px;color:var(--muted);word-break:break-all">${run.message}</code></div>`;
-    $(`#${rvId}`).style.display='inline-block';
-  }else{st.innerHTML+=`<div class="st er" style="margin-top:8px">${run.error}</div>`;}
+  try{
+    const run=await fetch('/api/run-ocr',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({template:tpl,pdf_files:up.saved,user_id:uid})}).then(r=>r.json());
+    if(run.ok){
+      let detail='';
+      if(run.results){run.results.forEach(r=>{detail+=`<div style="font-size:12px;color:var(--tx2);margin:2px 0">${r.doc_id}: ${r.fields}개 필드, 검수 ${r.review}건</div>`})}
+      st.innerHTML=`<div class="st ok" style="margin-top:8px"><strong>${run.message}</strong>${detail}</div>`;
+      $(`#${rvId}`).style.display='inline-block';
+    }else{st.innerHTML=`<div class="st er" style="margin-top:8px">${run.error}</div>`;}
+  }catch(e){st.innerHTML=`<div class="st er" style="margin-top:8px">OCR 실행 오류: ${e.message}</div>`}
 }
 
 // ── Excel schema ──
@@ -356,8 +370,20 @@ async function loadExPdfs(){
   if(!r.pdfs?.length)u.innerHTML='<li><span class="fn" style="color:var(--muted)">PDF 없음</span></li>';
 }
 
+// ── Activity stats ──
+async function loadActivity(){
+  try{
+    const s=await fetch('/api/stats').then(r=>r.json());
+    $('#act-docs').textContent=s.total_docs||0;
+    $('#act-ok').textContent=s.completed_docs||0;
+    $('#act-review').textContent=(s.total_docs||0)-(s.completed_docs||0);
+    $('#act-al').textContent=s.active_learning?.total_corrections||0;
+  }catch(e){/* silent */}
+}
+
 // ── Init ──
 document.addEventListener('DOMContentLoaded',()=>{
+  loadActivity();
   loadTpls();
   setupUp('up-single','fi-single',sF,'fl-single',false);
   setupUp('up-batch','fi-batch',bF,'fl-batch',true);
