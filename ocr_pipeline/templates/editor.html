@@ -6,55 +6,67 @@
 <title>OCR 템플릿 편집기</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; background: #f5f5f5; }
-.header { background: #2c3e50; color: #fff; padding: 10px 20px; display: flex; align-items: center; gap: 20px; }
-.header h1 { font-size: 18px; }
+body { font-family: 'Segoe UI', -apple-system, sans-serif; background: #09090b; color: #fafafa; }
+.global-nav { background: #18181b; border-bottom: 1px solid #3f3f46; padding: 0 24px; display: flex; align-items: center; height: 40px; gap: 16px; }
+.global-nav .logo { font-size: 15px; font-weight: 700; color: #818cf8; margin-right: 12px; }
+.global-nav a { color: #a1a1aa; text-decoration: none; font-size: 13px; padding: 4px 12px; border-radius: 5px; }
+.global-nav a:hover { color: #fafafa; background: #27272a; }
+.global-nav a.on { color: #fafafa; background: #27272a; }
+.header { background: #18181b; color: #fafafa; padding: 8px 20px; display: flex; align-items: center; gap: 20px; border-bottom: 1px solid #3f3f46; }
+.header h1 { font-size: 16px; color: #818cf8; }
 .header .meta { display: flex; gap: 10px; align-items: center; }
-.header input, .header select { padding: 4px 8px; border: none; border-radius: 3px; font-size: 13px; }
+.header input, .header select { padding: 4px 8px; border: 1px solid #3f3f46; border-radius: 5px; font-size: 13px; background: #27272a; color: #fafafa; }
 .header input { width: 280px; }
-.main { display: flex; height: calc(100vh - 46px); }
+.main { display: flex; height: calc(100vh - 86px); }
 
 /* 캔버스 영역 */
-.canvas-area { flex: 1; overflow: auto; padding: 10px; background: #ddd; position: relative; }
+.canvas-area { flex: 1; overflow: auto; padding: 10px; background: #0c0c10; position: relative; }
 .canvas-wrap { position: relative; display: inline-block; cursor: crosshair; }
 .canvas-wrap img { display: block; user-select: none; -webkit-user-drag: none; }
 .canvas-wrap canvas { position: absolute; top: 0; left: 0; }
 
 /* 사이드바 */
-.sidebar { width: 380px; background: #fff; border-left: 1px solid #ccc; display: flex; flex-direction: column; }
-.sidebar-header { padding: 10px; background: #ecf0f1; border-bottom: 1px solid #ccc; display: flex; gap: 8px; flex-wrap: wrap; }
-.sidebar-header button { padding: 5px 10px; font-size: 12px; cursor: pointer; border: 1px solid #bbb; border-radius: 3px; background: #fff; }
-.sidebar-header button:hover { background: #e8e8e8; }
-.sidebar-header button.primary { background: #2980b9; color: #fff; border-color: #2980b9; }
-.sidebar-header button.primary:hover { background: #2471a3; }
-.sidebar-header button.danger { background: #e74c3c; color: #fff; border-color: #e74c3c; }
+.sidebar { width: 380px; background: #18181b; border-left: 1px solid #3f3f46; display: flex; flex-direction: column; }
+.sidebar-header { padding: 10px; background: #27272a; border-bottom: 1px solid #3f3f46; display: flex; gap: 8px; flex-wrap: wrap; }
+.sidebar-header button { padding: 5px 10px; font-size: 12px; cursor: pointer; border: 1px solid #3f3f46; border-radius: 5px; background: #27272a; color: #fafafa; }
+.sidebar-header button:hover { background: #3f3f46; }
+.sidebar-header button.primary { background: #6366f1; color: #fff; border-color: #6366f1; }
+.sidebar-header button.primary:hover { background: #4f46e5; }
+.sidebar-header button.danger { background: #ef4444; color: #fff; border-color: #ef4444; }
 
 .field-list { flex: 1; overflow-y: auto; padding: 8px; }
-.field-card { border: 2px solid #ddd; border-radius: 5px; margin-bottom: 8px; padding: 8px; font-size: 12px; cursor: pointer; transition: border-color 0.15s; }
-.field-card.selected { border-color: #2980b9; background: #eaf2f8; }
+.field-card { border: 2px solid #3f3f46; border-radius: 8px; margin-bottom: 8px; padding: 8px; font-size: 12px; cursor: pointer; transition: border-color 0.15s; background: #27272a; }
+.field-card.selected { border-color: #6366f1; background: #1e1b4b; }
 .field-card .row { display: flex; gap: 6px; margin-bottom: 4px; align-items: center; }
-.field-card label { font-size: 11px; color: #666; min-width: 50px; }
-.field-card input, .field-card select { flex: 1; padding: 3px 5px; font-size: 12px; border: 1px solid #ccc; border-radius: 3px; }
-.field-card .field-num { font-weight: bold; font-size: 13px; }
+.field-card label { font-size: 11px; color: #a1a1aa; min-width: 50px; }
+.field-card input, .field-card select { flex: 1; padding: 3px 5px; font-size: 12px; border: 1px solid #3f3f46; border-radius: 4px; background: #18181b; color: #fafafa; }
+.field-card .field-num { font-weight: bold; font-size: 13px; color: #818cf8; }
 .field-card .color-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
-.field-card .delete-btn { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 16px; padding: 0 4px; }
+.field-card .delete-btn { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 16px; padding: 0 4px; }
 
 /* 하단 상태바 */
-.statusbar { background: #2c3e50; color: #aaa; padding: 4px 12px; font-size: 11px; display: flex; justify-content: space-between; }
+.statusbar { background: #18181b; color: #a1a1aa; padding: 4px 12px; font-size: 11px; display: flex; justify-content: space-between; border-top: 1px solid #3f3f46; }
 
 /* 모달 */
-.modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; }
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 100; justify-content: center; align-items: center; }
 .modal-overlay.show { display: flex; }
-.modal { background: #fff; border-radius: 8px; padding: 20px; min-width: 400px; max-height: 80vh; overflow-y: auto; }
-.modal h3 { margin-bottom: 12px; }
-.modal .template-item { padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 6px; cursor: pointer; }
-.modal .template-item:hover { background: #eaf2f8; }
+.modal { background: #18181b; border: 1px solid #3f3f46; border-radius: 12px; padding: 20px; min-width: 400px; max-height: 80vh; overflow-y: auto; color: #fafafa; }
+.modal h3 { margin-bottom: 12px; color: #818cf8; }
+.modal .template-item { padding: 8px; border: 1px solid #3f3f46; border-radius: 6px; margin-bottom: 6px; cursor: pointer; background: #27272a; }
+.modal .template-item:hover { background: #3f3f46; border-color: #6366f1; }
 
 /* 업로드 안내 */
-.upload-guide { display: flex; justify-content: center; align-items: center; height: 100%; color: #888; font-size: 16px; }
+.upload-guide { display: flex; justify-content: center; align-items: center; height: 100%; color: #a1a1aa; font-size: 16px; }
 </style>
 </head>
 <body>
+
+<div class="global-nav">
+  <span class="logo">OCR Pipeline</span>
+  <a href="/">대시보드</a>
+  <a href="/review">검수하기</a>
+  <a href="/editor" class="on">편집기</a>
+</div>
 
 <div class="header">
   <h1>OCR 템플릿 편집기</h1>
