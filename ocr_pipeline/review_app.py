@@ -38,6 +38,123 @@ def create_app(work_dir: str = "work", output_dir: str = "output") -> Flask:
     def review_page():
         return render_template("review.html")
 
+    # ── 템플릿 편집기 (메인 앱에 통합) ──
+
+    @app.route("/editor")
+    def editor_page():
+        return render_template("editor.html")
+
+    _editor_page_cache = {}
+
+    @app.route("/editor/upload", methods=["POST"])
+    def editor_upload():
+        import fitz
+        f = request.files.get("file")
+        if not f:
+            return jsonify(error="파일이 없습니다"), 400
+        page_num = int(request.form.get("page", 1)) - 1
+        data = f.read()
+        filename = f.filename or "unknown"
+        if filename.lower().endswith(".pdf"):
+            doc = fitz.open(stream=data, filetype="pdf")
+            if page_num >= len(doc):
+                return jsonify(error=f"페이지 {page_num+1}이 없습니다"), 400
+            page = doc[page_num]
+            pix = page.get_pixmap(dpi=150)
+            img_bytes = pix.tobytes("png")
+            total_pages = len(doc)
+            doc.close()
+        else:
+            img_bytes = data
+            total_pages = 1
+        b64 = base64.b64encode(img_bytes).decode()
+        _editor_page_cache["current"] = img_bytes
+        return jsonify(image=f"data:image/png;base64,{b64}", total_pages=total_pages, filename=filename)
+
+    @app.route("/editor/presets")
+    def editor_presets():
+        FIELD_TYPES = ["text","korean_name","number_text","date","date_or_birth","phone","resident_number","account","address","relation","checkbox","signature"]
+        GROUPS = ["일반","신청인","담당자","기타"]
+        GROUP_COLORS = {"일반":"#888888","신청인":"#e74c3c","담당자":"#2980b9","기타":"#27ae60"}
+        SAMPLE = {
+            "name":{"label":"이름","field_type":"korean_name","group":"신청인","required":True},
+            "rrn":{"label":"주민등록번호","field_type":"resident_number","group":"신청인","required":True},
+            "phone":{"label":"전화번호","field_type":"phone","group":"신청인","required":False},
+            "address":{"label":"주소","field_type":"address","group":"신청인","required":False},
+            "date":{"label":"날짜","field_type":"date","group":"일반","required":False},
+            "checkbox":{"label":"체크박스","field_type":"checkbox","group":"일반","required":False},
+            "text":{"label":"텍스트","field_type":"text","group":"일반","required":False},
+        }
+        return jsonify(presets=SAMPLE, field_types=FIELD_TYPES, groups=GROUPS, group_colors=GROUP_COLORS)
+
+    @app.route("/editor/save-template", methods=["POST"])
+    def editor_save_template():
+        import json as _json
+        data = request.get_json(force=True, silent=True)
+        if not data:
+            return jsonify(error="데이터가 없습니다"), 400
+        template_id = data.get("template_id", "template_v1")
+        template_dir = os.path.join(os.path.dirname(work_dir), "template")
+        os.makedirs(template_dir, exist_ok=True)
+        out_path = os.path.join(template_dir, f"{template_id}.json")
+        with open(out_path, "w", encoding="utf-8") as fp:
+            _json.dump(data, fp, ensure_ascii=False, indent=2)
+        return jsonify(saved=out_path)
+
+    @app.route("/editor/templates")
+    def editor_list_templates():
+        import json as _json
+        template_dir = os.path.join(os.path.dirname(work_dir), "template")
+        if not os.path.exists(template_dir):
+            return jsonify(templates=[])
+        result = []
+        import glob as _glob
+        for f in sorted(_glob.glob(os.path.join(template_dir, "*.json"))):
+            with open(f, encoding="utf-8") as fp:
+                meta = _json.load(fp)
+            result.append({"filename": os.path.basename(f), "template_id": meta.get("template_id", ""), "document_name": meta.get("document_name",""), "field_count": len(meta.get("fields",[]))})
+        return jsonify(templates=result)
+
+    @app.route("/editor/load-template", methods=["POST"])
+    def editor_load_template():
+        import json as _json
+        data = request.get_json(force=True, silent=True)
+        filename = data.get("filename","") if data else ""
+        if not filename:
+            return jsonify(error="파일명이 없습니다"), 400
+        template_dir = os.path.join(os.path.dirname(work_dir), "template")
+        path = os.path.join(template_dir, filename)
+        if not os.path.exists(path):
+            return jsonify(error="파일을 찾을 수 없습니다"), 404
+        with open(path, encoding="utf-8") as fp:
+            template = _json.load(fp)
+        return jsonify(template=template)
+
+    # ── API: 바운딩 박스 미세 조정 (검수 페이지에서) ──
+
+    @app.route("/api/update-bbox", methods=["POST"])
+    def api_update_bbox():
+        """검수 페이지에서 필드의 바운딩 박스 좌표를 미세 조정한다."""
+        data = request.get_json(force=True, silent=True)
+        if not data:
+            return jsonify({"error": "요청 데이터가 없습니다"}), 400
+        doc_id = data.get("document_id", "")
+        field_key = data.get("field_key", "")
+        new_bbox = data.get("bbox_norm")
+        if not SAFE_DOC_ID.match(doc_id):
+            return jsonify({"error": "문서 ID가 올바르지 않습니다"}), 400
+        if not new_bbox or len(new_bbox) != 4:
+            return jsonify({"error": "bbox_norm은 [x, y, w, h] 형식이어야 합니다"}), 400
+        doc = store.get_document(doc_id)
+        if doc is None:
+            return jsonify({"error": "문서 없음"}), 404
+        field = doc.get("fields", {}).get(field_key)
+        if field is None:
+            return jsonify({"error": "필드 없음"}), 404
+        field["bbox_norm"] = new_bbox
+        store._atomic_write(store._doc_path(doc_id), doc)
+        return jsonify({"ok": True, "field_key": field_key, "bbox_norm": new_bbox})
+
     # ── API: PDF 업로드 (단건/배치) ──
 
     @app.route("/api/upload-pdf", methods=["POST"])

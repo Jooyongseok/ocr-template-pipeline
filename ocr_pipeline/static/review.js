@@ -158,8 +158,21 @@ function renderFieldOverlays() {
       div.classList.add('status-error');
     }
 
-    div.title = `${field.label} (${field.confidence.toFixed(2)})`;
-    div.addEventListener('click', () => selectField(idx));
+    div.title = `${field.label} (${field.confidence.toFixed(2)}) - 모서리를 드래그하여 크기 조정`;
+    div.addEventListener('click', (e) => { if (!e.target.classList.contains('resize-handle')) selectField(idx); });
+
+    // Resize handle (bottom-right corner)
+    const handle = document.createElement('div');
+    handle.className = 'resize-handle';
+    handle.addEventListener('mousedown', (e) => startResize(e, idx, div));
+    div.appendChild(handle);
+
+    // Move handle (whole overlay drag)
+    div.addEventListener('mousedown', (e) => {
+      if (e.target.classList.contains('resize-handle')) return;
+      startMove(e, idx, div);
+    });
+
     container.appendChild(div);
   });
 }
@@ -614,6 +627,81 @@ function setupEventListeners() {
       }
     }
   });
+}
+
+// ── Bbox drag/resize ──
+
+function startResize(e, idx, div) {
+  e.preventDefault();
+  e.stopPropagation();
+  const container = $('#field-overlays');
+  const rect = container.getBoundingClientRect();
+  const field = state.fields[idx];
+  const startX = e.clientX;
+  const startY = e.clientY;
+  const startW = field.bbox_norm[2];
+  const startH = field.bbox_norm[3];
+
+  function onMove(e2) {
+    const dx = (e2.clientX - startX) / rect.width;
+    const dy = (e2.clientY - startY) / rect.height;
+    field.bbox_norm[2] = Math.max(0.01, startW + dx);
+    field.bbox_norm[3] = Math.max(0.005, startH + dy);
+    div.style.width = (field.bbox_norm[2] * 100) + '%';
+    div.style.height = (field.bbox_norm[3] * 100) + '%';
+  }
+  function onUp() {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    saveBbox(field);
+  }
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+
+function startMove(e, idx, div) {
+  e.preventDefault();
+  const container = $('#field-overlays');
+  const rect = container.getBoundingClientRect();
+  const field = state.fields[idx];
+  const startX = e.clientX;
+  const startY = e.clientY;
+  const startLeft = field.bbox_norm[0];
+  const startTop = field.bbox_norm[1];
+
+  function onMove(e2) {
+    const dx = (e2.clientX - startX) / rect.width;
+    const dy = (e2.clientY - startY) / rect.height;
+    field.bbox_norm[0] = Math.max(0, Math.min(1 - field.bbox_norm[2], startLeft + dx));
+    field.bbox_norm[1] = Math.max(0, Math.min(1 - field.bbox_norm[3], startTop + dy));
+    div.style.left = (field.bbox_norm[0] * 100) + '%';
+    div.style.top = (field.bbox_norm[1] * 100) + '%';
+  }
+  function onUp() {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    saveBbox(field);
+    selectField(idx);
+  }
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+}
+
+async function saveBbox(field) {
+  try {
+    await fetch('/api/update-bbox', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        document_id: state.currentDocId,
+        field_key: field.field_key,
+        bbox_norm: field.bbox_norm,
+      }),
+    });
+    showToast('위치 조정 저장됨', 'success');
+  } catch (_) {
+    showToast('위치 저장 실패', 'error');
+  }
 }
 
 // ── Modal helpers ──

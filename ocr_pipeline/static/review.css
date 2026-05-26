@@ -166,6 +166,22 @@ select {
 .field-overlay.status-review { border-color: var(--peach); background: rgba(250,179,135,0.15); }
 .field-overlay.status-error { border-color: var(--red); background: rgba(243,139,168,0.2); }
 .field-overlay.active { border-width: 3px; box-shadow: 0 0 12px rgba(137,180,250,0.5); border-color: var(--blue); }
+.field-overlay { cursor: move; }
+.resize-handle {
+  position: absolute;
+  bottom: -3px;
+  right: -3px;
+  width: 10px;
+  height: 10px;
+  background: var(--blue);
+  border-radius: 2px;
+  cursor: nwse-resize;
+  pointer-events: all;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.field-overlay:hover .resize-handle,
+.field-overlay.active .resize-handle { opacity: 1; }
 
 /* ── Field list (sidebar) ── */
 #field-list {
