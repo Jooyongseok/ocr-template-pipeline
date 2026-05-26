@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OCR Template Pipeline v2</title>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#050507;--s1:#0c0c10;--s2:#141419;--s3:#1c1c24;--bd:#2a2a36;
+  --tx:#eeeef2;--tx2:#9898a8;--tx3:#68687a;
+  --ac:#7c6cf0;--ac2:#a78bfa;--ac3:#c4b5fd;
+  --g:#34d399;--y:#fbbf24;--r:#f87171;--o:#fb923c;--t:#2dd4bf;--pk:#f472b6;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard Variable',-apple-system,sans-serif;background:var(--bg);color:var(--tx);line-height:1.7}
+
+nav{position:fixed;top:0;left:0;right:0;height:48px;background:rgba(5,5,7,.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--bd);z-index:99;display:flex;align-items:center;padding:0 28px;gap:20px}
+.n-logo{font-size:14px;font-weight:700;color:var(--ac2);letter-spacing:-.3px}
+.n-links{display:flex;gap:2px}
+.n-links a{color:var(--tx3);text-decoration:none;font-size:12px;padding:5px 10px;border-radius:5px;transition:.15s}
+.n-links a:hover,.n-links a.on{color:var(--tx);background:var(--s2)}
+
+section{min-height:100vh;padding:80px 28px 56px;display:flex;flex-direction:column;justify-content:center}
+.w{max-width:1020px;margin:0 auto;width:100%}
+
+/* Hero */
+.hero{text-align:center;background:radial-gradient(ellipse at 50% 30%,rgba(124,108,240,.08),transparent 65%)}
+.hero h1{font-size:46px;font-weight:800;letter-spacing:-.8px;margin-bottom:10px;line-height:1.15}
+.hero h1 em{font-style:normal;background:linear-gradient(135deg,var(--ac2),var(--t));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero .sub{font-size:19px;color:var(--tx2);margin-bottom:6px}
+.hero .desc{font-size:14px;color:var(--tx3);margin-bottom:32px;max-width:600px;margin-left:auto;margin-right:auto}
+.pills{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+.pill{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:14px 22px;min-width:115px}
+.pill .v{font-size:24px;font-weight:700;display:block;margin-bottom:2px}
+.pill .l{font-size:11px;color:var(--tx3)}
+.pill .v.c1{color:var(--ac2)}.pill .v.c2{color:var(--g)}.pill .v.c3{color:var(--o)}.pill .v.c4{color:var(--pk)}
+
+/* Section header */
+.sh{margin-bottom:36px}
+.sh .tag{font-size:11px;font-weight:700;color:var(--ac);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px}
+.sh h2{font-size:30px;font-weight:700;letter-spacing:-.3px;margin-bottom:6px}
+.sh p{font-size:15px;color:var(--tx2);max-width:600px}
+
+/* Grid / Card */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:768px){.g2,.g3{grid-template-columns:1fr}}
+.c{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:20px;transition:transform .15s}
+.c:hover{transform:translateY(-2px)}
+.c h3{font-size:15px;margin-bottom:5px;display:flex;align-items:center;gap:7px}
+.c p{color:var(--tx2);font-size:12px;line-height:1.6}
+.ic{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+
+/* Table */
+table{width:100%;border-collapse:collapse;background:var(--s2);border-radius:10px;overflow:hidden;margin:10px 0}
+th,td{padding:9px 13px;text-align:left;border-bottom:1px solid var(--bd);font-size:12px}
+th{background:var(--s3);color:var(--tx3);font-weight:600}
+tr:last-child td{border-bottom:none}
+.hl{color:var(--g);font-weight:700}
+.ac{color:var(--ac2);font-weight:600}
+
+/* Metrics */
+.mrow{display:flex;gap:14px;flex-wrap:wrap}
+.mb{flex:1;min-width:140px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:20px;text-align:center}
+.mb .mv{font-size:32px;font-weight:800}.mb .ml{font-size:11px;color:var(--tx3);margin-top:2px}
+.mv.c1{color:var(--g)}.mv.c2{color:var(--ac2)}.mv.c3{color:var(--o)}
+
+/* Comparison */
+.cmp{display:grid;grid-template-columns:1fr 40px 1fr;gap:14px;align-items:center}
+.cmp-vs{font-size:20px;font-weight:800;color:var(--ac);text-align:center}
+.cmp-b{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:20px}
+.cmp-b h4{margin-bottom:8px;font-size:14px}
+.cmp-b ul{list-style:none;font-size:12px}
+.cmp-b li{padding:4px 0;color:var(--tx2);display:flex;align-items:center;gap:7px}
+.cmp-b li::before{content:"";width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.cmp-b.bf li::before{background:var(--r)}.cmp-b.af li::before{background:var(--g)}
+@media(max-width:768px){.cmp{grid-template-columns:1fr}.cmp-vs{display:none}}
+
+/* Pipeline */
+.pipe{display:flex;flex-direction:column;max-width:640px;margin:0 auto}
+.ps{display:flex;gap:14px}
+.pl{display:flex;flex-direction:column;align-items:center;width:32px;flex-shrink:0}
+.pd{width:12px;height:12px;border-radius:50%;border:3px solid var(--bg);z-index:1;flex-shrink:0}
+.pc{width:2px;flex:1;background:var(--bd);min-height:18px}
+.pt{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:12px 16px;flex:1;margin-bottom:8px}
+.pt h4{font-size:13px;margin-bottom:2px}.pt p{font-size:11px;color:var(--tx2)}
+
+/* CER box */
+.cer{background:var(--s2);border:1px solid var(--ac);border-radius:10px;padding:24px;margin-bottom:20px}
+.cer h3{color:var(--ac2);font-size:17px;margin-bottom:10px}
+.cer-f{background:var(--s1);border-radius:8px;padding:14px 18px;font-family:Georgia,serif;font-size:17px;text-align:center;margin:14px 0;letter-spacing:.5px}
+.cer-f .top{border-bottom:2px solid var(--tx3);padding-bottom:3px;display:inline-block}
+.cer-ex{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.cer-ei{background:var(--s3);border-radius:8px;padding:12px}
+.cer-ei .lb{font-size:11px;color:var(--tx3);margin-bottom:3px}
+.cer-ei .vl{font-size:15px;font-weight:600}
+.cer-ei .vl.gd{color:var(--g)}.cer-ei .vl.bd{color:var(--r)}
+
+/* Code */
+.code{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:16px 20px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;overflow-x:auto;color:#c9d1d9}
+.code .cm{color:#8b949e}.code .kw{color:#ff7b72}.code .st{color:#a5d6ff}.code .tp{color:#79c0ff}
+.code .hi{background:rgba(124,108,240,.08);margin:0 -20px;padding:0 20px}
+
+/* Sync */
+.sync-d{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;padding:18px}
+.sn{background:var(--s3);border:2px solid var(--bd);border-radius:10px;padding:12px 16px;text-align:center;min-width:110px}
+.sn.act{border-color:var(--ac)}.sn .st{font-size:11px;font-weight:600}.sn .sd{font-size:9px;color:var(--tx3)}
+.sa{font-size:18px;color:var(--ac)}
+
+/* Future / Data Analytics */
+.future-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:768px){.future-grid{grid-template-columns:1fr}}
+.future-card{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:20px;position:relative;overflow:hidden}
+.future-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px}
+.future-card.f1::before{background:linear-gradient(90deg,var(--ac),var(--t))}
+.future-card.f2::before{background:linear-gradient(90deg,var(--g),var(--y))}
+.future-card.f3::before{background:linear-gradient(90deg,var(--o),var(--pk))}
+.future-card .phase{font-size:10px;font-weight:700;color:var(--ac);letter-spacing:1px;margin-bottom:6px}
+.future-card h4{font-size:14px;margin-bottom:4px}
+.future-card p{font-size:11px;color:var(--tx2);line-height:1.5}
+.future-card ul{list-style:none;font-size:11px;color:var(--tx2);margin-top:6px}
+.future-card ul li{padding:2px 0}
+.future-card ul li::before{content:">";color:var(--ac);margin-right:6px}
+
+/* Tech */
+.tg{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.ti{background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:12px;text-align:center}
+.ti .tn{font-weight:600;font-size:12px;margin-bottom:1px}.ti .td{font-size:10px;color:var(--tx3)}
+
+/* Footer */
+footer{text-align:center;padding:32px;color:var(--tx3);font-size:11px;border-top:1px solid var(--bd)}
+
+/* Anim */
+.f{opacity:0;transform:translateY(18px);transition:opacity .4s,transform .4s}
+.f.v{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="n-logo">OCR Pipeline</span>
+  <div class="n-links">
+    <a href="#title">Home</a>
+    <a href="#problem">문제 정의</a>
+    <a href="#arch">아키텍처</a>
+    <a href="#pipe">파이프라인</a>
+    <a href="#model">모델</a>
+    <a href="#cer">CER</a>
+    <a href="#feat">기능</a>
+    <a href="#sync">동기화</a>
+    <a href="#future">향후 계획</a>
+    <a href="#tech">기술</a>
+    <a href="#results">결과</a>
+  </div>
+</nav>
+
+<!-- 1. Title -->
+<section id="title" class="hero">
+  <div class="w">
+    <h1><em>OCR Template Pipeline</em> v2</h1>
+    <p class="sub">범용 문서 OCR 자동 추출 시스템</p>
+    <p class="desc">어떤 서류든 템플릿을 만들면 자동으로 텍스트를 추출하고, 웹에서 검수하고, 데이터화합니다. 추출된 데이터는 분석과 시각화까지 연결됩니다.</p>
+    <div class="pills">
+      <div class="pill"><span class="v c1">6,000+</span><span class="l">Lines of Code</span></div>
+      <div class="pill"><span class="v c2">2.6%</span><span class="l">CER</span></div>
+      <div class="pill"><span class="v c3">17</span><span class="l">REST APIs</span></div>
+      <div class="pill"><span class="v c4">12</span><span class="l">Field Types</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. Problem -->
+<section id="problem">
+  <div class="w">
+    <div class="sh f"><div class="tag">01 / Problem</div><h2>문제 정의</h2><p>종이 서류의 수기 입력은 느리고, 오류가 많고, 데이터 활용이 불가능합니다</p></div>
+    <div class="cmp f">
+      <div class="cmp-b bf"><h4 style="color:var(--r)">AS-IS</h4><ul>
+        <li>사람이 직접 타이핑 (1건 10-15분)</li>
+        <li>수기 입력 오류율 3-5%</li>
+        <li>50+개 필드를 일일이 확인</li>
+        <li>특정 서류 양식에 종속</li>
+        <li>데이터 분석/활용 불가 (종이 상태)</li>
+      </ul></div>
+      <div class="cmp-vs">VS</div>
+      <div class="cmp-b af"><h4 style="color:var(--g)">TO-BE</h4><ul>
+        <li>자동 OCR + 웹 검수 (1건 2-3분)</li>
+        <li>CER 2.6% (Fine-tuned TrOCR)</li>
+        <li>문제 필드만 자동 하이라이트</li>
+        <li>어떤 서류든 템플릿으로 적용</li>
+        <li>구조화된 데이터로 분석/시각화 가능</li>
+      </ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. Architecture -->
+<section id="arch">
+  <div class="w">
+    <div class="sh f"><div class="tag">02 / Architecture</div><h2>시스템 아키텍처</h2><p>모듈화된 구조로 모델/템플릿/검증 규칙을 독립적으로 교체 가능</p></div>
+    <div class="g3 f">
+      <div class="c"><h3><span class="ic" style="background:rgba(124,108,240,.12)">&#9881;</span>Model Registry</h3><p>YAML 설정으로 모델 교체. UI 드롭다운에서 클릭 한 번으로 전환.</p></div>
+      <div class="c"><h3><span class="ic" style="background:rgba(52,211,153,.12)">&#128196;</span>Template Editor</h3><p>PDF 위에 바운딩 박스를 그려 필드 정의. 엑셀 틀에서 자동 추출도 가능.</p></div>
+      <div class="c"><h3><span class="ic" style="background:rgba(251,146,60,.12)">&#128279;</span>Field Dependency</h3><p>4가지 타입의 필드 연관성 규칙 자동 검증. 세트 누락 경고.</p></div>
+      <div class="c"><h3><span class="ic" style="background:rgba(244,114,182,.12)">&#128274;</span>Data Store</h3><p>원자적 저장, PII 마스킹, JSONL 수정 이력, 경로 순회 방어.</p></div>
+      <div class="c"><h3><span class="ic" style="background:rgba(45,212,191,.12)">&#129302;</span>Active Learning</h3><p>검수 수정 데이터 자동 수집. 500건 누적 시 재학습 알림.</p></div>
+      <div class="c"><h3><span class="ic" style="background:rgba(251,191,36,.12)">&#128259;</span>Correction Sync</h3><p>교정 데이터 JSON 내보내기/가져오기. Git으로 팀 공유.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. Pipeline -->
+<section id="pipe">
+  <div class="w">
+    <div class="sh f"><div class="tag">03 / Pipeline</div><h2>데이터 흐름</h2><p>PDF 입력부터 데이터 분석까지 End-to-End</p></div>
+    <div class="pipe f">
+      <div class="ps"><div class="pl"><div class="pd" style="background:var(--ac2)"></div><div class="pc"></div></div><div class="pt"><h4>1. 템플릿 생성 (최초 1회)</h4><p>PDF 위에 바운딩 박스를 그려 필드 정의. 재사용 가능한 JSON으로 저장.</p></div></div>
+      <div class="ps"><div class="pl"><div class="pd" style="background:var(--g)"></div><div class="pc"></div></div><div class="pt"><h4>2. PDF 업로드 + Crop 생성</h4><p>스캔 PDF와 템플릿을 로드. 필드별 crop 이미지 자동 추출.</p></div></div>
+      <div class="ps"><div class="pl"><div class="pd" style="background:var(--o)"></div><div class="pc"></div></div><div class="pt"><h4>3. OCR 배치 추론</h4><p>선택된 모델로 배치 추론. 체크박스/서명은 CV 감지기로 처리.</p></div></div>
+      <div class="ps"><div class="pl"><div class="pd" style="background:var(--pk)"></div><div class="pc"></div></div><div class="pt"><h4>4. 검증 + 연관성 체크</h4><p>12가지 필드별 검증 규칙 + 필드 연관성 규칙으로 경고 생성.</p></div></div>
+      <div class="ps"><div class="pl"><div class="pd" style="background:var(--t)"></div><div class="pc"></div></div><div class="pt"><h4>5. 검수 UI + 엑셀 출력</h4><p>웹에서 즉시 수정. 수정 데이터는 Active Learning으로 자동 수집.</p></div></div>
+      <div class="ps"><div class="pl"><div class="pd" style="background:var(--y)"></div></div><div class="pt" style="border-color:var(--y)"><h4>6. 데이터 분석 + 시각화 (향후)</h4><p>구조화된 데이터를 기반으로 통계 분석, 트렌드 시각화, 대시보드 생성.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. Model -->
+<section id="model">
+  <div class="w">
+    <div class="sh f"><div class="tag">04 / Model</div><h2>모델 성능</h2><p>AI Hub 한국어 글자체 데이터셋(23GB)으로 Fine-tuning한 TrOCR-small</p></div>
+    <div class="mrow f" style="margin-bottom:24px">
+      <div class="mb"><div class="mv c1">2.648%</div><div class="ml">CER</div></div>
+      <div class="mb"><div class="mv c2">97.35%</div><div class="ml">Exact Match</div></div>
+      <div class="mb"><div class="mv c3">54.5M</div><div class="ml">Parameters</div></div>
+      <div class="mb"><div class="mv c2">678.9</div><div class="ml">Samples/sec</div></div>
+    </div>
+    <div class="g2 f">
+      <div class="c"><h3>모델 비교</h3>
+        <table><thead><tr><th>모델</th><th>파라미터</th><th>CER</th><th>크기</th></tr></thead><tbody>
+          <tr><td class="ac">Fine-tuned TrOCR-small</td><td>54.5M</td><td class="hl">2.648%</td><td>218 MB</td></tr>
+          <tr><td>ddobokki/ko-trocr</td><td>213M</td><td>-</td><td>~850 MB</td></tr>
+          <tr><td>Qwen-VL (실험)</td><td>9.6B</td><td>-</td><td>~18 GB</td></tr>
+        </tbody></table>
+      </div>
+      <div class="c"><h3>UI에서 모델 전환</h3>
+        <p style="margin:8px 0">검수 UI 헤더 드롭다운에서 클릭 한 번으로 교체</p>
+        <div class="code"><span class="cm"># model_config.yaml</span>
+<span class="kw">models</span>:
+  <span class="tp">fine_tuned_trocr</span>:
+    <span class="kw">engine</span>: <span class="st">trocr</span>
+    <span class="kw">model_path</span>: <span class="st">../handwriting_ocr/checkpoints/best/</span>
+<div class="hi"><span class="kw">default_model</span>: <span class="tp">fine_tuned_trocr</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. CER -->
+<section id="cer">
+  <div class="w">
+    <div class="sh f"><div class="tag">05 / CER Metric</div><h2>CER이란?</h2><p>OCR 모델의 정확도를 측정하는 핵심 평가 지표</p></div>
+    <div class="cer f">
+      <h3>Character Error Rate</h3>
+      <p style="color:var(--tx2);font-size:13px">OCR이 인식한 텍스트와 정답을 문자 단위로 비교하여, 잘못된 문자의 비율을 나타냅니다.</p>
+      <div class="cer-f">CER = <span class="top">S + D + I</span> / N</div>
+      <table><thead><tr><th>기호</th><th>의미</th><th>설명</th></tr></thead><tbody>
+        <tr><td class="ac">S (Substitution)</td><td>대체</td><td>잘못된 문자로 바뀜 ('동' -> '둥')</td></tr>
+        <tr><td class="ac">D (Deletion)</td><td>누락</td><td>문자가 빠짐 ('홍길동' -> '홍길')</td></tr>
+        <tr><td class="ac">I (Insertion)</td><td>삽입</td><td>없는 문자가 추가됨 ('홍길동' -> '홍길동이')</td></tr>
+        <tr><td class="ac">N (Total)</td><td>전체</td><td>정답 텍스트의 전체 문자 수</td></tr>
+      </tbody></table>
+      <div class="cer-ex">
+        <div class="cer-ei"><div class="lb">우리 모델</div><div class="vl gd">2.648%</div><p style="font-size:11px;color:var(--tx3);margin-top:3px">100글자 중 2.6글자만 오류</p></div>
+        <div class="cer-ei"><div class="lb">일반적인 나쁜 CER</div><div class="vl bd">15-20%</div><p style="font-size:11px;color:var(--tx3);margin-top:3px">100글자 중 15-20글자 오류</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. Features -->
+<section id="feat" style="min-height:auto;padding-bottom:36px">
+  <div class="w">
+    <div class="sh f"><div class="tag">06 / Features</div><h2>핵심 기능</h2></div>
+    <div class="g3 f" style="margin-bottom:24px">
+      <div class="c"><h3>범용 템플릿 편집기</h3><p>어떤 PDF든 업로드 후 바운딩 박스로 필드 정의. 엑셀 틀에서 자동 추출. 저장/재사용.</p></div>
+      <div class="c"><h3>통합 검수 UI</h3><p>문서 이미지 + 검수 패널 분할. 필드 오버레이, crop 확대, 즉시 수정, 키보드 네비게이션.</p></div>
+      <div class="c"><h3>필드 연관성 검증</h3><p>linked_set, mixed, all_optional, conditional 4타입. 그룹 누락 자동 경고.</p></div>
+      <div class="c"><h3>빠른 수정 도구</h3><p>공백 제거, 특수문자 제거, 주민번호 하이픈, 값 비우기 원클릭.</p></div>
+      <div class="c"><h3>통계 대시보드</h3><p>완료율, 신뢰도 분포, 타입별 오류, Active Learning 현황 실시간.</p></div>
+      <div class="c"><h3>고신뢰도 일괄 확인</h3><p>80%+ 필드를 한 번에 확인. 수동 검수 시간 대폭 단축.</p></div>
+    </div>
+    <table class="f"><thead><tr><th>필드 타입</th><th>검증 규칙</th><th>예시</th></tr></thead><tbody>
+      <tr><td class="ac">korean_name</td><td>한글 2-5자</td><td>홍길동</td></tr>
+      <tr><td class="ac">resident_number</td><td>13자리, 항상 검수</td><td>900101-1234567</td></tr>
+      <tr><td class="ac">phone</td><td>한국 전화번호 패턴</td><td>010-1234-5678</td></tr>
+      <tr><td class="ac">address</td><td>최소 길이</td><td>경기도 화성시...</td></tr>
+      <tr><td class="ac">date / date_or_birth</td><td>YYYYMMDD 또는 6자리</td><td>20260101</td></tr>
+      <tr><td class="ac">checkbox / signature</td><td>CV 기반 감지</td><td>체크됨 / 서명있음</td></tr>
+    </tbody></table>
+  </div>
+</section>
+
+<!-- 8. Sync -->
+<section id="sync">
+  <div class="w">
+    <div class="sh f"><div class="tag">07 / Data Sync</div><h2>원격 교정 데이터 동기화</h2><p>다른 사용자가 수정한 데이터를 팀 전체가 공유</p></div>
+    <div class="sync-d f">
+      <div class="sn"><div class="st">사용자 A</div><div class="sd">필드 수정 + 검수</div></div>
+      <div class="sa">-></div>
+      <div class="sn act"><div class="st">교정 데이터 JSON</div><div class="sd">doc_id, field, text,<br>confidence, timestamp</div></div>
+      <div class="sa">-></div>
+      <div class="sn"><div class="st">Git / API</div><div class="sd">sync_corrections/</div></div>
+      <div class="sa">-></div>
+      <div class="sn"><div class="st">사용자 B</div><div class="sd">데이터 수신 + 학습</div></div>
+    </div>
+    <div class="g2 f" style="margin-top:18px">
+      <div class="c"><h3>동기화 방식</h3><table>
+        <tr><td class="ac">JSON 내보내기</td><td>검수 UI [동기화] 버튼 클릭</td></tr>
+        <tr><td class="ac">REST API 수신</td><td>POST /api/sync-corrections</td></tr>
+        <tr><td class="ac">Git Push</td><td>sync_corrections/ 폴더 커밋</td></tr>
+        <tr><td class="ac">Active Learning</td><td>교정 -> CSV -> 모델 재학습</td></tr>
+      </table></div>
+      <div class="c"><h3>저장 구조</h3><div class="code" style="font-size:11px">work/
+  data_store/{doc}.json     <span class="cm"># 메인 (원자적 저장)</span>
+  data_store/{doc}_history.jsonl <span class="cm"># 수정 이력</span>
+  learning_data/
+    corrections.csv         <span class="cm"># AL 수집 데이터</span>
+    images/*.png            <span class="cm"># crop 복사본</span>
+  sync_corrections/
+    received_corrections.jsonl <span class="cm"># 원격 수신</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 9. Future -->
+<section id="future">
+  <div class="w">
+    <div class="sh f"><div class="tag">08 / Future</div><h2>향후 계획: 데이터 분석 + 시각화</h2><p>OCR로 추출한 구조화된 데이터를 기반으로 분석과 시각화까지 확장합니다</p></div>
+    <div class="future-grid f">
+      <div class="future-card f1">
+        <div class="phase">PHASE 1 - 데이터 분석</div>
+        <h4>추출 데이터 통계 분석</h4>
+        <p>OCR 파이프라인으로 수집된 구조화 데이터를 활용한 통계 분석</p>
+        <ul>
+          <li>필드별 입력 패턴 분석 (빈도, 분포)</li>
+          <li>문서 유형별 오류 패턴 분석</li>
+          <li>지역별/기간별 신청 현황 집계</li>
+          <li>이상값 자동 탐지 (outlier detection)</li>
+        </ul>
+      </div>
+      <div class="future-card f2">
+        <div class="phase">PHASE 2 - 시각화 대시보드</div>
+        <h4>실시간 데이터 시각화</h4>
+        <p>추출된 데이터를 인터랙티브 차트와 대시보드로 시각화</p>
+        <ul>
+          <li>신청 현황 대시보드 (지도, 차트)</li>
+          <li>OCR 신뢰도 트렌드 그래프</li>
+          <li>필드별 수정률 히트맵</li>
+          <li>모델 성능 모니터링 시계열</li>
+        </ul>
+      </div>
+      <div class="future-card f3">
+        <div class="phase">PHASE 3 - 확장</div>
+        <h4>시스템 확장</h4>
+        <p>VLM 모델, 다중 페이지, 자동 재학습으로 시스템 고도화</p>
+        <ul>
+          <li>VLM 모델 통합 (Qwen-VL, Varco)</li>
+          <li>다중 페이지 서류 처리</li>
+          <li>Active Learning 자동 재학습</li>
+          <li>다양한 행정/계약 서류 확장</li>
+        </ul>
+      </div>
+    </div>
+    <div class="c f" style="margin-top:18px;border-color:var(--y)">
+      <h3 style="color:var(--y)">데이터 활용 비전</h3>
+      <p style="font-size:13px;color:var(--tx);line-height:1.8">
+        현재 시스템은 <strong>종이 서류 -> 구조화된 디지털 데이터</strong> 변환에 집중하고 있습니다.<br>
+        향후 이 데이터를 기반으로 <strong>Pandas/Plotly 기반 데이터 분석</strong>, <strong>인터랙티브 시각화 대시보드</strong>,
+        <strong>리포트 자동 생성</strong>까지 연결하여, 단순 OCR을 넘어 <strong>데이터 기반 의사결정 지원 시스템</strong>으로 발전시킬 계획입니다.
+        수집된 데이터의 패턴 분석, 이상값 탐지, 트렌드 예측 등 데이터 사이언스 기법을 적용하여
+        실제 업무에 즉시 활용 가능한 인사이트를 제공합니다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- 10. Tech -->
+<section id="tech">
+  <div class="w">
+    <div class="sh f"><div class="tag">09 / Tech Stack</div><h2>기술 스택</h2></div>
+    <div class="tg f">
+      <div class="ti"><div class="tn" style="color:var(--ac2)">PyTorch 2.0+</div><div class="td">딥러닝</div></div>
+      <div class="ti"><div class="tn" style="color:var(--g)">Transformers</div><div class="td">HuggingFace</div></div>
+      <div class="ti"><div class="tn" style="color:var(--o)">TrOCR-small</div><div class="td">Fine-tuned</div></div>
+      <div class="ti"><div class="tn" style="color:var(--pk)">Flask 3.0</div><div class="td">웹 서버</div></div>
+      <div class="ti"><div class="tn" style="color:var(--t)">PyMuPDF</div><div class="td">PDF</div></div>
+      <div class="ti"><div class="tn" style="color:var(--ac2)">OpenCV</div><div class="td">이미지</div></div>
+      <div class="ti"><div class="tn" style="color:var(--y)">openpyxl</div><div class="td">엑셀</div></div>
+      <div class="ti"><div class="tn" style="color:var(--g)">Vanilla JS</div><div class="td">프론트엔드</div></div>
+      <div class="ti"><div class="tn" style="color:var(--o)">AI Hub</div><div class="td">학습 데이터</div></div>
+    </div>
+    <div class="mrow f" style="margin-top:24px">
+      <div class="mb"><div class="mv c2">6,000+</div><div class="ml">Python (lines)</div></div>
+      <div class="mb"><div class="mv c1">17</div><div class="ml">REST API</div></div>
+      <div class="mb"><div class="mv c3">12</div><div class="ml">필드 타입</div></div>
+      <div class="mb"><div class="mv c2">990</div><div class="ml">프론트엔드 (lines)</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 11. Results -->
+<section id="results">
+  <div class="w">
+    <div class="sh f"><div class="tag">10 / Results</div><h2>결과</h2></div>
+    <div class="g2 f" style="margin-bottom:24px">
+      <div class="c"><h3 style="color:var(--g)">달성 성과</h3><table>
+        <tr><td>모델 교체</td><td class="hl">UI 클릭 1번으로 전환</td></tr>
+        <tr><td>CER</td><td class="hl">2.648%</td></tr>
+        <tr><td>Exact Match</td><td class="hl">97.35%</td></tr>
+        <tr><td>범용 템플릿</td><td class="hl">어떤 문서든 적용 가능</td></tr>
+        <tr><td>원격 동기화</td><td class="hl">JSON/Git 교정 데이터 공유</td></tr>
+        <tr><td>데이터 보안</td><td class="hl">PII 마스킹 + 원자적 저장</td></tr>
+      </table></div>
+      <div class="c"><h3 style="color:var(--ac2)">데이터 활용 로드맵</h3><table>
+        <tr><td class="ac">현재</td><td>OCR 추출 + 검수 + 엑셀 출력</td></tr>
+        <tr><td class="ac">Phase 1</td><td>추출 데이터 통계 분석 + 패턴 탐지</td></tr>
+        <tr><td class="ac">Phase 2</td><td>인터랙티브 시각화 대시보드</td></tr>
+        <tr><td class="ac">Phase 3</td><td>자동 리포트 생성 + 예측 분석</td></tr>
+      </table></div>
+    </div>
+    <div class="f" style="text-align:center;padding:36px 0">
+      <h2 style="font-size:24px;margin-bottom:8px">
+        <span style="color:var(--ac2)">Template</span> ->
+        <span style="color:var(--g)">OCR</span> ->
+        <span style="color:var(--o)">Review</span> ->
+        <span style="color:var(--pk)">Data</span> ->
+        <span style="color:var(--y)">Analytics</span>
+      </h2>
+      <p style="color:var(--tx2);font-size:14px">종이에서 데이터로, 데이터에서 인사이트로</p>
+      <p style="color:var(--tx3);font-size:12px;margin-top:4px">Thank you</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  OCR Template Pipeline v2 | Capstone Design
+  <br><a href="guide.html" style="color:var(--ac2);text-decoration:none;font-size:12px">사용 가이드 보기 &rarr;</a>
+</footer>
+
+<script>
+const obs=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting)x.target.classList.add('v')})},{threshold:.1,rootMargin:'0px 0px -30px 0px'});
+document.querySelectorAll('.f').forEach(el=>obs.observe(el));
+const secs=document.querySelectorAll('section[id]'),navAs=document.querySelectorAll('.n-links a');
+window.addEventListener('scroll',()=>{let c='';secs.forEach(s=>{if(scrollY>=s.offsetTop-80)c=s.id});navAs.forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+c))});
+</script>
+</body>
+</html>

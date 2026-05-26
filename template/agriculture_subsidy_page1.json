@@ -1,0 +1,114 @@
+{
+  "template_id": "agriculture_subsidy_page1",
+  "document_name": "기본직접지불금 지급대상자 등록신청서 (농업인용)",
+  "description": "농업 농촌 공익기능 증진 직접지불제도 운영에 관한 법률 시행규칙 [별지 제2호서식]",
+  "page_scope": [1],
+  "coordinate_system": "normalized",
+  "created_at": "2026-05-26",
+  "fields": [
+    {"key": "receipt_no", "label": "접수번호", "page": 1, "group": "header", "field_type": "text", "required": false, "bbox_norm": [0.12, 0.055, 0.12, 0.025], "excel_sheet": "applicants", "excel_column": "접수번호"},
+    {"key": "receipt_date", "label": "접수일자", "page": 1, "group": "header", "field_type": "date", "required": false, "bbox_norm": [0.26, 0.055, 0.12, 0.025], "excel_sheet": "applicants", "excel_column": "접수일자"},
+    {"key": "farm_business_no", "label": "농업경영체 등록번호", "page": 1, "group": "header", "field_type": "number_text", "required": false, "bbox_norm": [0.55, 0.055, 0.18, 0.025], "excel_sheet": "applicants", "excel_column": "농업경영체_등록번호"},
+    {"key": "farmer_no_top", "label": "농업인 번호", "page": 1, "group": "header", "field_type": "number_text", "required": false, "bbox_norm": [0.75, 0.055, 0.15, 0.025], "excel_sheet": "applicants", "excel_column": "농업인_번호"},
+    {"key": "business_info_change_date", "label": "경영정보 변경일", "page": 1, "group": "header", "field_type": "date", "required": false, "bbox_norm": [0.55, 0.085, 0.18, 0.025], "excel_sheet": "applicants", "excel_column": "경영정보변경일"},
+
+    {"key": "applicant_name", "label": "등록신청인 성명", "page": 1, "group": "applicant", "field_type": "korean_name", "required": true, "bbox_norm": [0.25, 0.15, 0.15, 0.03], "excel_sheet": "applicants", "excel_column": "등록신청인_성명"},
+    {"key": "applicant_rrn", "label": "등록신청인 주민등록번호", "page": 1, "group": "applicant", "field_type": "resident_number", "required": true, "bbox_norm": [0.42, 0.15, 0.22, 0.03], "excel_sheet": "applicants", "excel_column": "등록신청인_주민등록번호"},
+    {"key": "applicant_account", "label": "등록신청인 계좌번호 은행명", "page": 1, "group": "applicant", "field_type": "account", "required": false, "bbox_norm": [0.25, 0.185, 0.35, 0.03], "excel_sheet": "applicants", "excel_column": "등록신청인_계좌번호_은행명"},
+    {"key": "applicant_address", "label": "등록신청인 주소", "page": 1, "group": "applicant", "field_type": "address", "required": true, "bbox_norm": [0.25, 0.22, 0.55, 0.03], "excel_sheet": "applicants", "excel_column": "등록신청인_주소"},
+    {"key": "applicant_phone", "label": "등록신청인 전화번호", "page": 1, "group": "applicant", "field_type": "phone", "required": false, "bbox_norm": [0.65, 0.185, 0.2, 0.03], "excel_sheet": "applicants", "excel_column": "등록신청인_전화번호"},
+
+    {"key": "manager_name", "label": "경영주 성명", "page": 1, "group": "manager", "field_type": "korean_name", "required": false, "bbox_norm": [0.25, 0.28, 0.15, 0.03], "excel_sheet": "applicants", "excel_column": "경영주_성명"},
+    {"key": "manager_farmer_no", "label": "경영주 농업인번호", "page": 1, "group": "manager", "field_type": "number_text", "required": false, "bbox_norm": [0.42, 0.28, 0.18, 0.03], "excel_sheet": "applicants", "excel_column": "경영주_농업인번호"},
+    {"key": "manager_application_type", "label": "경영주 신청유형", "page": 1, "group": "manager", "field_type": "text", "required": false, "bbox_norm": [0.62, 0.28, 0.2, 0.03], "excel_sheet": "applicants", "excel_column": "경영주_신청유형"},
+    {"key": "manager_address", "label": "경영주 주민등록표상 주소지", "page": 1, "group": "manager", "field_type": "address", "required": false, "bbox_norm": [0.25, 0.315, 0.55, 0.03], "excel_sheet": "applicants", "excel_column": "경영주_주소지"},
+    {"key": "manager_village", "label": "경영주 마을명", "page": 1, "group": "manager", "field_type": "text", "required": false, "bbox_norm": [0.25, 0.35, 0.2, 0.03], "excel_sheet": "applicants", "excel_column": "경영주_마을명"},
+    {"key": "manager_phone", "label": "경영주 전화번호", "page": 1, "group": "manager", "field_type": "phone", "required": false, "bbox_norm": [0.5, 0.35, 0.2, 0.03], "excel_sheet": "applicants", "excel_column": "경영주_전화번호"},
+    {"key": "livestock_farm_checked", "label": "축산농가 체크", "page": 1, "group": "manager", "field_type": "checkbox", "required": false, "bbox_norm": [0.79, 0.28, 0.025, 0.025], "excel_sheet": "applicants", "excel_column": "축산농가_체크"},
+    {"key": "facility_farm_checked", "label": "시설농가 체크", "page": 1, "group": "manager", "field_type": "checkbox", "required": false, "bbox_norm": [0.86, 0.28, 0.025, 0.025], "excel_sheet": "applicants", "excel_column": "시설농가_체크"},
+
+    {"key": "other_farmer_name", "label": "경영주 외 성명", "page": 1, "group": "other_farmer", "field_type": "korean_name", "required": false, "bbox_norm": [0.25, 0.40, 0.15, 0.03], "excel_sheet": "applicants", "excel_column": "경영주외_성명"},
+    {"key": "other_farmer_birth", "label": "경영주 외 생년월일", "page": 1, "group": "other_farmer", "field_type": "date_or_birth", "required": false, "bbox_norm": [0.42, 0.40, 0.15, 0.03], "excel_sheet": "applicants", "excel_column": "경영주외_생년월일"},
+    {"key": "other_farmer_no", "label": "경영주 외 농업인번호", "page": 1, "group": "other_farmer", "field_type": "number_text", "required": false, "bbox_norm": [0.59, 0.40, 0.15, 0.03], "excel_sheet": "applicants", "excel_column": "경영주외_농업인번호"},
+    {"key": "other_farmer_relation", "label": "경영주와의 관계", "page": 1, "group": "other_farmer", "field_type": "relation", "required": false, "bbox_norm": [0.76, 0.40, 0.12, 0.03], "excel_sheet": "applicants", "excel_column": "경영주와의_관계"},
+
+    {"key": "family_1_left_relation", "label": "가족 1행 좌 관계", "page": 1, "group": "family", "field_type": "relation", "required": false, "bbox_norm": [0.12, 0.48, 0.08, 0.025], "excel_sheet": "family_members", "excel_column": "1행_좌_관계"},
+    {"key": "family_1_left_name", "label": "가족 1행 좌 성명", "page": 1, "group": "family", "field_type": "korean_name", "required": false, "bbox_norm": [0.21, 0.48, 0.10, 0.025], "excel_sheet": "family_members", "excel_column": "1행_좌_성명"},
+    {"key": "family_1_left_rrn", "label": "가족 1행 좌 주민등록번호", "page": 1, "group": "family", "field_type": "resident_number", "required": false, "bbox_norm": [0.32, 0.48, 0.16, 0.025], "excel_sheet": "family_members", "excel_column": "1행_좌_주민등록번호"},
+    {"key": "family_1_right_relation", "label": "가족 1행 우 관계", "page": 1, "group": "family", "field_type": "relation", "required": false, "bbox_norm": [0.52, 0.48, 0.08, 0.025], "excel_sheet": "family_members", "excel_column": "1행_우_관계"},
+    {"key": "family_1_right_name", "label": "가족 1행 우 성명", "page": 1, "group": "family", "field_type": "korean_name", "required": false, "bbox_norm": [0.61, 0.48, 0.10, 0.025], "excel_sheet": "family_members", "excel_column": "1행_우_성명"},
+    {"key": "family_1_right_rrn", "label": "가족 1행 우 주민등록번호", "page": 1, "group": "family", "field_type": "resident_number", "required": false, "bbox_norm": [0.72, 0.48, 0.16, 0.025], "excel_sheet": "family_members", "excel_column": "1행_우_주민등록번호"},
+
+    {"key": "family_2_left_relation", "label": "가족 2행 좌 관계", "page": 1, "group": "family", "field_type": "relation", "required": false, "bbox_norm": [0.12, 0.51, 0.08, 0.025], "excel_sheet": "family_members", "excel_column": "2행_좌_관계"},
+    {"key": "family_2_left_name", "label": "가족 2행 좌 성명", "page": 1, "group": "family", "field_type": "korean_name", "required": false, "bbox_norm": [0.21, 0.51, 0.10, 0.025], "excel_sheet": "family_members", "excel_column": "2행_좌_성명"},
+    {"key": "family_2_left_rrn", "label": "가족 2행 좌 주민등록번호", "page": 1, "group": "family", "field_type": "resident_number", "required": false, "bbox_norm": [0.32, 0.51, 0.16, 0.025], "excel_sheet": "family_members", "excel_column": "2행_좌_주민등록번호"},
+    {"key": "family_2_right_relation", "label": "가족 2행 우 관계", "page": 1, "group": "family", "field_type": "relation", "required": false, "bbox_norm": [0.52, 0.51, 0.08, 0.025], "excel_sheet": "family_members", "excel_column": "2행_우_관계"},
+    {"key": "family_2_right_name", "label": "가족 2행 우 성명", "page": 1, "group": "family", "field_type": "korean_name", "required": false, "bbox_norm": [0.61, 0.51, 0.10, 0.025], "excel_sheet": "family_members", "excel_column": "2행_우_성명"},
+    {"key": "family_2_right_rrn", "label": "가족 2행 우 주민등록번호", "page": 1, "group": "family", "field_type": "resident_number", "required": false, "bbox_norm": [0.72, 0.51, 0.16, 0.025], "excel_sheet": "family_members", "excel_column": "2행_우_주민등록번호"},
+
+    {"key": "family_3_left_relation", "label": "가족 3행 좌 관계", "page": 1, "group": "family", "field_type": "relation", "required": false, "bbox_norm": [0.12, 0.54, 0.08, 0.025], "excel_sheet": "family_members", "excel_column": "3행_좌_관계"},
+    {"key": "family_3_left_name", "label": "가족 3행 좌 성명", "page": 1, "group": "family", "field_type": "korean_name", "required": false, "bbox_norm": [0.21, 0.54, 0.10, 0.025], "excel_sheet": "family_members", "excel_column": "3행_좌_성명"},
+    {"key": "family_3_left_rrn", "label": "가족 3행 좌 주민등록번호", "page": 1, "group": "family", "field_type": "resident_number", "required": false, "bbox_norm": [0.32, 0.54, 0.16, 0.025], "excel_sheet": "family_members", "excel_column": "3행_좌_주민등록번호"},
+    {"key": "family_3_right_relation", "label": "가족 3행 우 관계", "page": 1, "group": "family", "field_type": "relation", "required": false, "bbox_norm": [0.52, 0.54, 0.08, 0.025], "excel_sheet": "family_members", "excel_column": "3행_우_관계"},
+    {"key": "family_3_right_name", "label": "가족 3행 우 성명", "page": 1, "group": "family", "field_type": "korean_name", "required": false, "bbox_norm": [0.61, 0.54, 0.10, 0.025], "excel_sheet": "family_members", "excel_column": "3행_우_성명"},
+    {"key": "family_3_right_rrn", "label": "가족 3행 우 주민등록번호", "page": 1, "group": "family", "field_type": "resident_number", "required": false, "bbox_norm": [0.72, 0.54, 0.16, 0.025], "excel_sheet": "family_members", "excel_column": "3행_우_주민등록번호"},
+
+    {"key": "family_4_left_relation", "label": "가족 4행 좌 관계", "page": 1, "group": "family", "field_type": "relation", "required": false, "bbox_norm": [0.12, 0.57, 0.08, 0.025], "excel_sheet": "family_members", "excel_column": "4행_좌_관계"},
+    {"key": "family_4_left_name", "label": "가족 4행 좌 성명", "page": 1, "group": "family", "field_type": "korean_name", "required": false, "bbox_norm": [0.21, 0.57, 0.10, 0.025], "excel_sheet": "family_members", "excel_column": "4행_좌_성명"},
+    {"key": "family_4_left_rrn", "label": "가족 4행 좌 주민등록번호", "page": 1, "group": "family", "field_type": "resident_number", "required": false, "bbox_norm": [0.32, 0.57, 0.16, 0.025], "excel_sheet": "family_members", "excel_column": "4행_좌_주민등록번호"},
+    {"key": "family_4_right_relation", "label": "가족 4행 우 관계", "page": 1, "group": "family", "field_type": "relation", "required": false, "bbox_norm": [0.52, 0.57, 0.08, 0.025], "excel_sheet": "family_members", "excel_column": "4행_우_관계"},
+    {"key": "family_4_right_name", "label": "가족 4행 우 성명", "page": 1, "group": "family", "field_type": "korean_name", "required": false, "bbox_norm": [0.61, 0.57, 0.10, 0.025], "excel_sheet": "family_members", "excel_column": "4행_우_성명"},
+    {"key": "family_4_right_rrn", "label": "가족 4행 우 주민등록번호", "page": 1, "group": "family", "field_type": "resident_number", "required": false, "bbox_norm": [0.72, 0.57, 0.16, 0.025], "excel_sheet": "family_members", "excel_column": "4행_우_주민등록번호"},
+
+    {"key": "family_separated_1_relation", "label": "별거가족 1행 관계", "page": 1, "group": "family", "field_type": "relation", "required": false, "bbox_norm": [0.12, 0.62, 0.08, 0.025], "excel_sheet": "family_members", "excel_column": "별거_1행_관계"},
+    {"key": "family_separated_1_name", "label": "별거가족 1행 성명", "page": 1, "group": "family", "field_type": "korean_name", "required": false, "bbox_norm": [0.21, 0.62, 0.10, 0.025], "excel_sheet": "family_members", "excel_column": "별거_1행_성명"},
+    {"key": "family_separated_1_rrn", "label": "별거가족 1행 주민등록번호", "page": 1, "group": "family", "field_type": "resident_number", "required": false, "bbox_norm": [0.32, 0.62, 0.16, 0.025], "excel_sheet": "family_members", "excel_column": "별거_1행_주민등록번호"},
+    {"key": "family_separated_2_relation", "label": "별거가족 2행 관계", "page": 1, "group": "family", "field_type": "relation", "required": false, "bbox_norm": [0.52, 0.62, 0.08, 0.025], "excel_sheet": "family_members", "excel_column": "별거_2행_관계"},
+    {"key": "family_separated_2_name", "label": "별거가족 2행 성명", "page": 1, "group": "family", "field_type": "korean_name", "required": false, "bbox_norm": [0.61, 0.62, 0.10, 0.025], "excel_sheet": "family_members", "excel_column": "별거_2행_성명"},
+    {"key": "family_separated_2_rrn", "label": "별거가족 2행 주민등록번호", "page": 1, "group": "family", "field_type": "resident_number", "required": false, "bbox_norm": [0.72, 0.62, 0.16, 0.025], "excel_sheet": "family_members", "excel_column": "별거_2행_주민등록번호"},
+
+    {"key": "family_info_confirm_checked", "label": "가족관계 인적정보 확인 체크", "page": 1, "group": "confirm", "field_type": "checkbox", "required": false, "bbox_norm": [0.15, 0.68, 0.025, 0.025], "excel_sheet": "applicants", "excel_column": "가족관계_인적정보_확인_체크"}
+  ],
+  "groups": {
+    "header": {"label": "일반현황", "color": "#888888"},
+    "applicant": {"label": "등록신청인 (3.2절)", "color": "#e74c3c"},
+    "manager": {"label": "경영주인 농업인 (3.3절)", "color": "#2980b9"},
+    "other_farmer": {"label": "경영주 외 농업인 (3.4절)", "color": "#8e44ad"},
+    "family": {"label": "가족관계 인적정보 (3.5-3.6절)", "color": "#27ae60"},
+    "confirm": {"label": "확인 (3.7절)", "color": "#f39c12"}
+  },
+  "dependency_rules": {
+    "family_set": {
+      "type": "linked_set",
+      "description": "가족관계 행: 관계+성명+주민번호는 세트로 입력",
+      "groups": [
+        ["family_1_left_relation", "family_1_left_name", "family_1_left_rrn"],
+        ["family_1_right_relation", "family_1_right_name", "family_1_right_rrn"],
+        ["family_2_left_relation", "family_2_left_name", "family_2_left_rrn"],
+        ["family_2_right_relation", "family_2_right_name", "family_2_right_rrn"],
+        ["family_3_left_relation", "family_3_left_name", "family_3_left_rrn"],
+        ["family_3_right_relation", "family_3_right_name", "family_3_right_rrn"],
+        ["family_4_left_relation", "family_4_left_name", "family_4_left_rrn"],
+        ["family_4_right_relation", "family_4_right_name", "family_4_right_rrn"]
+      ]
+    },
+    "applicant": {
+      "type": "mixed",
+      "description": "등록신청인: 이름/주민번호/주소 필수, 계좌/전화 선택",
+      "required": ["applicant_name", "applicant_rrn", "applicant_address"],
+      "optional": ["applicant_account", "applicant_phone"]
+    },
+    "manager": {
+      "type": "all_optional",
+      "description": "경영주 정보: 전부 선택 (비어있어도 OK)",
+      "fields": ["manager_name", "manager_farmer_no", "manager_address", "manager_village", "manager_phone", "manager_application_type", "livestock_farm_checked", "facility_farm_checked"]
+    },
+    "other_farmer": {
+      "type": "conditional",
+      "description": "경영주 외: 이름 있으면 생년월일도 필요",
+      "trigger": "other_farmer_name",
+      "then_required": ["other_farmer_birth"],
+      "always_optional": ["other_farmer_no", "other_farmer_relation"]
+    }
+  }
+}

@@ -1,91 +1,113 @@
-"""계약서 3.1~3.7절 기반 필드 프리셋 정의"""
+"""범용 필드 프리셋 정의 -- 사용자 정의 템플릿 지원.
 
+사용자가 직접 바운딩 박스와 필드 타입을 정의하고,
+재사용 가능한 템플릿으로 저장할 수 있다.
+"""
+import json
+import os
+from pathlib import Path
+
+# ── 기본 필드 타입 (모든 문서에서 사용 가능) ──
 FIELD_TYPES = [
-    "korean_name", "resident_number", "phone", "account", "address",
-    "number_text", "date", "date_or_birth", "relation", "text",
-    "checkbox", "signature",
+    "text",            # 일반 텍스트
+    "korean_name",     # 한국어 이름
+    "number_text",     # 숫자+텍스트 혼합
+    "date",            # 날짜 (YYYYMMDD)
+    "date_or_birth",   # 생년월일 (6자리 또는 8자리)
+    "phone",           # 전화번호
+    "resident_number", # 주민등록번호
+    "account",         # 계좌번호
+    "address",         # 주소
+    "relation",        # 가족 관계
+    "checkbox",        # 체크박스
+    "signature",       # 서명
 ]
 
-GROUPS = ["header", "applicant", "manager", "other_farmer", "family", "confirm"]
+# ── 기본 그룹 (사용자가 추가/수정 가능) ──
+DEFAULT_GROUPS = ["일반", "신청인", "담당자", "기타"]
 
-GROUP_COLORS = {
-    "header": "#888888",
-    "applicant": "#e74c3c",
-    "manager": "#2980b9",
-    "other_farmer": "#8e44ad",
-    "family": "#27ae60",
-    "confirm": "#f39c12",
+DEFAULT_GROUP_COLORS = {
+    "일반": "#888888",
+    "신청인": "#e74c3c",
+    "담당자": "#2980b9",
+    "기타": "#27ae60",
 }
 
-EXCEL_SHEET_MAP = {
-    "header": "applicants",
-    "applicant": "applicants",
-    "manager": "applicants",
-    "other_farmer": "applicants",
-    "family": "family_members",
-    "confirm": "applicants",
+# ── 샘플 프리셋 (참고용, 사용자가 직접 만드는 것이 기본) ──
+SAMPLE_PRESETS = {
+    "name": {"label": "이름", "field_type": "korean_name", "group": "신청인", "required": True},
+    "rrn": {"label": "주민등록번호", "field_type": "resident_number", "group": "신청인", "required": True},
+    "phone": {"label": "전화번호", "field_type": "phone", "group": "신청인", "required": False},
+    "address": {"label": "주소", "field_type": "address", "group": "신청인", "required": False},
+    "date": {"label": "날짜", "field_type": "date", "group": "일반", "required": False},
+    "checkbox": {"label": "체크박스", "field_type": "checkbox", "group": "일반", "required": False},
+    "signature": {"label": "서명", "field_type": "signature", "group": "일반", "required": False},
+    "text": {"label": "텍스트", "field_type": "text", "group": "일반", "required": False},
 }
 
-# 3.1 일반현황 상단
-FIELD_PRESETS = {
-    "receipt_no": {"label": "접수번호", "field_type": "text", "group": "header", "required": False},
-    "receipt_date": {"label": "접수일자", "field_type": "date", "group": "header", "required": False},
-    "farm_business_no": {"label": "농업경영체_등록번호", "field_type": "number_text", "group": "header", "required": False},
-    "farmer_no_top": {"label": "농업인_번호", "field_type": "number_text", "group": "header", "required": False},
-    "business_info_change_date": {"label": "경영정보변경일", "field_type": "date", "group": "header", "required": False},
-    # 3.2 등록신청인
-    "applicant_name": {"label": "등록신청인_성명", "field_type": "korean_name", "group": "applicant", "required": True},
-    "applicant_rrn": {"label": "등록신청인_주민등록번호", "field_type": "resident_number", "group": "applicant", "required": True},
-    "applicant_account": {"label": "등록신청인_계좌번호_은행명", "field_type": "account", "group": "applicant", "required": False},
-    "applicant_address": {"label": "등록신청인_주소", "field_type": "address", "group": "applicant", "required": True},
-    "applicant_phone": {"label": "등록신청인_전화번호", "field_type": "phone", "group": "applicant", "required": False},
-    # 3.3 경영주인 농업인
-    "manager_name": {"label": "경영주_성명", "field_type": "korean_name", "group": "manager", "required": False},
-    "manager_farmer_no": {"label": "경영주_농업인번호", "field_type": "number_text", "group": "manager", "required": False},
-    "manager_application_type": {"label": "경영주_신청유형", "field_type": "text", "group": "manager", "required": False},
-    "manager_address": {"label": "경영주_주민등록표상주소지", "field_type": "address", "group": "manager", "required": False},
-    "manager_village": {"label": "경영주_마을명", "field_type": "text", "group": "manager", "required": False},
-    "manager_phone": {"label": "경영주_전화번호", "field_type": "phone", "group": "manager", "required": False},
-    "livestock_farm_checked": {"label": "축산농가_체크", "field_type": "checkbox", "group": "manager", "required": False},
-    "facility_farm_checked": {"label": "시설농가_체크", "field_type": "checkbox", "group": "manager", "required": False},
-    # 3.4 경영주 외의 농업인
-    "other_farmer_name": {"label": "경영주외_성명", "field_type": "korean_name", "group": "other_farmer", "required": False},
-    "other_farmer_birth": {"label": "경영주외_생년월일", "field_type": "date_or_birth", "group": "other_farmer", "required": False},
-    "other_farmer_no": {"label": "경영주외_농업인번호", "field_type": "number_text", "group": "other_farmer", "required": False},
-    "other_farmer_relation": {"label": "경영주와의_관계", "field_type": "relation", "group": "other_farmer", "required": False},
-    # 3.7 확인 체크
-    "family_info_confirm_checked": {"label": "가족관계_인적정보_확인_체크", "field_type": "checkbox", "group": "confirm", "required": False},
-}
 
-# 3.5 가족관계 인적정보 작성표 ④-1 (1~4행, 좌/우)
-for row in range(1, 5):
-    for side, side_label in [("left", "좌"), ("right", "우")]:
-        for suffix, label_suffix, ftype in [
-            ("relation", "관계", "relation"),
-            ("name", "성명", "korean_name"),
-            ("rrn", "주민등록번호", "resident_number"),
-        ]:
-            key = f"family_{row}_{side}_{suffix}"
-            FIELD_PRESETS[key] = {
-                "label": f"가족관계_④-1_{row}행_{side_label}_{label_suffix}",
-                "field_type": ftype,
-                "group": "family",
-                "required": False,
-            }
+# ── 사용자 정의 프리셋 로드/저장 ──
 
-# 3.6 가족관계 인적정보 작성표 ④-2 (선택)
-for row in range(1, 3):
-    for suffix, label_suffix, ftype in [
-        ("relation", "관계", "relation"),
-        ("name", "성명", "korean_name"),
-        ("rrn", "주민등록번호", "resident_number"),
-    ]:
-        key = f"family_separated_{row}_{suffix}"
-        FIELD_PRESETS[key] = {
-            "label": f"가족관계_④-2_{row}행_{label_suffix}",
-            "field_type": ftype,
-            "group": "family",
-            "required": False,
-        }
+USER_PRESETS_DIR = Path(__file__).resolve().parent.parent / "template" / "user_presets"
 
-PRESET_KEYS = list(FIELD_PRESETS.keys())
+
+def load_user_presets() -> dict:
+    """사용자가 저장한 커스텀 프리셋을 로드한다."""
+    USER_PRESETS_DIR.mkdir(parents=True, exist_ok=True)
+    presets = {}
+    for f in USER_PRESETS_DIR.glob("*.json"):
+        with open(f, encoding="utf-8") as fp:
+            data = json.load(fp)
+            presets[f.stem] = data
+    return presets
+
+
+def save_user_preset(name: str, preset: dict):
+    """커스텀 프리셋을 저장한다."""
+    USER_PRESETS_DIR.mkdir(parents=True, exist_ok=True)
+    path = USER_PRESETS_DIR / f"{name}.json"
+    with open(path, "w", encoding="utf-8") as fp:
+        json.dump(preset, fp, ensure_ascii=False, indent=2)
+    return str(path)
+
+
+def delete_user_preset(name: str) -> bool:
+    """커스텀 프리셋을 삭제한다."""
+    path = USER_PRESETS_DIR / f"{name}.json"
+    if path.exists():
+        path.unlink()
+        return True
+    return False
+
+
+def get_all_presets() -> dict:
+    """기본 프리셋 + 사용자 정의 프리셋을 합쳐서 반환한다."""
+    all_presets = dict(SAMPLE_PRESETS)
+    user = load_user_presets()
+    for name, data in user.items():
+        if "fields" in data:
+            for fk, fv in data["fields"].items():
+                all_presets[fk] = fv
+    return all_presets
+
+
+def get_groups_and_colors(user_groups: list[str] | None = None) -> tuple[list[str], dict]:
+    """사용 가능한 그룹 목록과 색상을 반환한다."""
+    groups = list(DEFAULT_GROUPS)
+    colors = dict(DEFAULT_GROUP_COLORS)
+    if user_groups:
+        for g in user_groups:
+            if g not in groups:
+                groups.append(g)
+                # auto-assign color
+                palette = ["#e67e22", "#9b59b6", "#1abc9c", "#34495e", "#f39c12", "#d35400"]
+                colors[g] = palette[len(groups) % len(palette)]
+    return groups, colors
+
+
+# ── 하위 호환성 ──
+FIELD_PRESETS = SAMPLE_PRESETS
+GROUPS = DEFAULT_GROUPS
+GROUP_COLORS = DEFAULT_GROUP_COLORS
+EXCEL_SHEET_MAP = {}  # 사용자가 정의
+PRESET_KEYS = list(SAMPLE_PRESETS.keys())

@@ -1,0 +1,7 @@
+torch
+transformers
+Pillow
+PyMuPDF
+openpyxl
+gradio>=4.0.0
+numpy

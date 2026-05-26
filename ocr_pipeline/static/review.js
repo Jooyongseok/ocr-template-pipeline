@@ -17,6 +17,18 @@ const API = {
   }).then(r => r.json()),
   stats: () => fetch('/api/stats').then(r => r.json()),
   exportExcel: () => fetch('/api/export-excel', {method: 'POST'}).then(r => r.json()),
+  models: () => fetch('/api/models').then(r => r.json()),
+  switchModel: (modelId) => fetch('/api/switch-model', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({model_id: modelId}),
+  }).then(r => r.json()),
+  exportCorrections: () => fetch('/api/export-corrections').then(r => r.json()),
+  syncCorrections: (corrections) => fetch('/api/sync-corrections', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({corrections}),
+  }).then(r => r.json()),
 };
 
 // ── State ──
@@ -36,10 +48,28 @@ const $$ = (sel) => document.querySelectorAll(sel);
 
 // ── Init ──
 document.addEventListener('DOMContentLoaded', async () => {
+  await loadModels();
   await loadDocuments();
   setupEventListeners();
   updateStats();
+  restoreSession();
 });
+
+// ── Model switcher ──
+async function loadModels() {
+  try {
+    const data = await API.models();
+    const sel = $('#model-selector');
+    sel.innerHTML = '';
+    (data.models || []).forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = m.description || m.id;
+      if (m.is_default) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  } catch (_) { /* model API not available */ }
+}
 
 async function loadDocuments() {
   try {
@@ -81,6 +111,7 @@ async function selectDocument(idx) {
     } else {
       showEmpty('이 문서는 모든 필드가 확인되었습니다.');
     }
+    saveSession();
   } catch (e) {
     showToast('필드 로드 실패: ' + e.message, 'error');
   }
@@ -306,6 +337,7 @@ async function confirmField() {
 
       // Move to next review field
       moveToNextReviewField();
+      saveSession();
     } else {
       showToast('저장 실패: ' + (result.error || ''), 'error');
     }
@@ -447,43 +479,345 @@ function setupEventListeners() {
     }
   });
 
+  // Help & Stats buttons
+  $('#btn-help').addEventListener('click', () => toggleModal('shortcut-modal'));
+  $('#btn-stats').addEventListener('click', () => openStatsModal());
+
+  // Model switcher
+  $('#model-selector').addEventListener('change', async (e) => {
+    const modelId = e.target.value;
+    showToast('모델 전환 중: ' + modelId, 'info');
+    const result = await API.switchModel(modelId);
+    if (result.ok) {
+      showToast('모델 전환 완료: ' + modelId, 'success');
+    } else {
+      showToast('모델 전환 실패: ' + (result.error || ''), 'error');
+    }
+  });
+
+  // Sync corrections
+  $('#btn-sync').addEventListener('click', async () => {
+    showToast('교정 데이터 내보내기 중...', 'info');
+    const result = await API.exportCorrections();
+    if (result.corrections && result.corrections.length > 0) {
+      // Save to localStorage for cross-machine transfer
+      const blob = new Blob([JSON.stringify(result, null, 2)], {type: 'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `corrections_${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(`${result.total}건 교정 데이터 다운로드 완료`, 'success');
+    } else {
+      showToast('내보낼 교정 데이터가 없습니다', 'info');
+    }
+  });
+
+  // Bulk confirm
+  $('#btn-bulk-confirm').addEventListener('click', bulkConfirmHighConfidence);
+
   // Filter
   $('#filter-status').addEventListener('change', (e) => {
     state.filter = e.target.value;
     renderFieldList();
   });
 
+  // Field search
+  $('#field-search').addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase();
+    $$('#field-list-items li').forEach(li => {
+      const text = li.textContent.toLowerCase();
+      li.style.display = text.includes(query) ? '' : 'none';
+    });
+  });
+
+  // Quick-fix toolbar
+  $$('.quickfix-btn').forEach(btn => {
+    btn.addEventListener('click', () => applyQuickFix(btn.dataset.action));
+  });
+
+  // Modal overlay click-to-close
+  $$('.modal-overlay').forEach(modal => {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.style.display = 'none';
+    });
+  });
+
   // Keyboard navigation
   document.addEventListener('keydown', (e) => {
     const input = $('#edit-input');
+    const searchInput = $('#field-search');
     const isInputFocused = document.activeElement === input;
+    const isSearchFocused = document.activeElement === searchInput;
+    const isModalOpen = $$('.modal-overlay[style*="display: flex"], .modal-overlay:not([style*="display:none"]):not([style*="display: none"])').length > 0
+      || ($('#shortcut-modal').style.display !== 'none') || ($('#stats-modal').style.display !== 'none');
+
+    // Close modal with Escape
+    if (e.key === 'Escape' && isModalOpen) {
+      e.preventDefault();
+      $$('.modal-overlay').forEach(m => m.style.display = 'none');
+      return;
+    }
+
+    // ? key for help (when not typing)
+    if (e.key === '?' && !isInputFocused && !isSearchFocused) {
+      e.preventDefault();
+      toggleModal('shortcut-modal');
+      return;
+    }
+
+    // Ctrl shortcuts
+    if (e.ctrlKey || e.metaKey) {
+      if (e.key === 'ArrowLeft') { e.preventDefault(); selectDocument(state.currentDocIdx - 1); return; }
+      if (e.key === 'ArrowRight') { e.preventDefault(); selectDocument(state.currentDocIdx + 1); return; }
+      if (e.key === 'e' || e.key === 'E') { e.preventDefault(); $('#btn-export').click(); return; }
+      if (e.key === 'd' || e.key === 'D') { e.preventDefault(); openStatsModal(); return; }
+    }
 
     if (e.key === 'Enter' && isInputFocused) {
       e.preventDefault();
       confirmField();
-    } else if (e.key === 'Escape') {
+    } else if (e.key === 'Escape' && !isModalOpen) {
       e.preventDefault();
       skipField();
-    } else if (e.key === 'Tab' && !e.ctrlKey) {
+    } else if (e.key === 'Tab' && !e.ctrlKey && !isSearchFocused) {
       e.preventDefault();
       if (e.shiftKey) {
         moveToPrevReviewField();
       } else {
-        // If input has changes, confirm first then move
         if (isInputFocused && input.value !== (state.fields[state.currentFieldIdx]?.value || '')) {
           confirmField();
         } else {
           moveToNextReviewField();
         }
       }
-    } else if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
+    } else if (e.key === 'z' && (e.ctrlKey || e.metaKey) && isInputFocused) {
       e.preventDefault();
-      // Undo: restore original value
       const field = state.fields[state.currentFieldIdx];
       if (field) {
         input.value = field.raw_text || '';
         showToast('원본 값 복원', 'info');
       }
     }
+  });
+}
+
+// ── Modal helpers ──
+
+function toggleModal(id) {
+  const modal = $('#' + id);
+  modal.style.display = modal.style.display === 'none' ? 'flex' : 'none';
+}
+
+function closeModal(id) {
+  $('#' + id).style.display = 'none';
+}
+
+// ── Quick-fix toolbar ──
+
+function applyQuickFix(action) {
+  const input = $('#edit-input');
+  if (!input) return;
+  let v = input.value;
+  switch (action) {
+    case 'trim': v = v.trim(); break;
+    case 'remove-special': v = v.replace(/[^가-힣a-zA-Z0-9\s\-]/g, ''); break;
+    case 'remove-spaces': v = v.replace(/\s+/g, ''); break;
+    case 'dash-rrn':
+      // Add hyphen to 13-digit RRN: 1234561234567 -> 123456-1234567
+      const digits = v.replace(/\D/g, '');
+      if (digits.length === 13) v = digits.slice(0, 6) + '-' + digits.slice(6);
+      break;
+    case 'clear': v = ''; break;
+  }
+  input.value = v;
+  input.focus();
+  showToast('빠른 수정 적용', 'info');
+}
+
+// ── Session persistence ──
+
+function saveSession() {
+  if (!state.currentDocId) return;
+  const session = {
+    docId: state.currentDocId,
+    docIdx: state.currentDocIdx,
+    fieldIdx: state.currentFieldIdx,
+    filter: state.filter,
+    ts: Date.now(),
+  };
+  try {
+    localStorage.setItem('ocr_review_session', JSON.stringify(session));
+  } catch (_) { /* quota exceeded */ }
+}
+
+function restoreSession() {
+  try {
+    const raw = localStorage.getItem('ocr_review_session');
+    if (!raw) return;
+    const session = JSON.parse(raw);
+    // Only restore if less than 24h old
+    if (Date.now() - session.ts > 86400000) return;
+
+    // Find document
+    const docIdx = state.documents.findIndex(d => d.document_id === session.docId);
+    if (docIdx >= 0 && docIdx !== state.currentDocIdx) {
+      // Update filter first
+      if (session.filter) {
+        state.filter = session.filter;
+        $('#filter-status').value = session.filter;
+      }
+      selectDocument(docIdx).then(() => {
+        if (session.fieldIdx >= 0 && session.fieldIdx < state.fields.length) {
+          selectField(session.fieldIdx);
+        }
+      });
+      showToast('이전 세션 복원됨', 'info');
+    }
+  } catch (_) { /* corrupt data */ }
+}
+
+// ── Bulk confirm ──
+
+async function bulkConfirmHighConfidence() {
+  const threshold = 0.80;
+  const toConfirm = state.fields.filter(f =>
+    f.status !== 'ok' && f.status !== 'unchecked' && f.confidence >= threshold
+  );
+
+  if (toConfirm.length === 0) {
+    showToast('일괄 확인할 고신뢰도 필드가 없습니다', 'info');
+    return;
+  }
+
+  const msg = `신뢰도 ${(threshold * 100).toFixed(0)}% 이상 필드 ${toConfirm.length}개를 일괄 확인하시겠습니까?`;
+  if (!confirm(msg)) return;
+
+  let success = 0;
+  for (const field of toConfirm) {
+    try {
+      const result = await API.update({
+        document_id: state.currentDocId,
+        field_key: field.field_key,
+        value: field.value || field.raw_text || '',
+      });
+      if (result.ok) {
+        field.status = 'ok';
+        field.confidence = 1.0;
+        field.edited = true;
+        success++;
+      }
+    } catch (_) { /* skip failed */ }
+  }
+
+  showToast(`${success}/${toConfirm.length} 필드 일괄 확인 완료`, 'success');
+  renderFieldOverlays();
+  renderFieldList();
+  updateDocProgressLocal();
+  moveToNextReviewField();
+}
+
+// ── Statistics dashboard ──
+
+async function openStatsModal() {
+  toggleModal('stats-modal');
+  if ($('#stats-modal').style.display === 'none') return;
+
+  try {
+    const stats = await API.stats();
+    const totalDocs = stats.total_docs || 0;
+    const completedDocs = stats.completed_docs || 0;
+    const reviewDocs = totalDocs - completedDocs;
+
+    $('#stat-total-docs').textContent = totalDocs;
+    $('#stat-completed-docs').textContent = completedDocs;
+    $('#stat-review-docs').textContent = reviewDocs;
+
+    // Count error fields from current state
+    let errorCount = 0;
+    if (state.fields) {
+      errorCount = state.fields.filter(f =>
+        f.status !== 'ok' && f.status !== 'unchecked'
+      ).length;
+    }
+    $('#stat-error-fields').textContent = errorCount;
+
+    // Confidence distribution chart
+    renderConfidenceChart();
+
+    // Error by field type
+    renderErrorByType();
+
+    // Active learning stats
+    const al = stats.active_learning || {};
+    $('#al-stats-detail').innerHTML = `
+      <div>총 수정 건수: <strong>${al.total_corrections || 0}</strong></div>
+      <div>재학습 트리거 임계값: <strong>${al.retrain_threshold || 500}</strong></div>
+      <div>진행률: <strong>${((al.total_corrections || 0) / (al.retrain_threshold || 500) * 100).toFixed(1)}%</strong></div>
+    `;
+  } catch (e) {
+    $('#stats-body').innerHTML = '<p style="color:var(--red)">통계 로드 실패: ' + e.message + '</p>';
+  }
+}
+
+function renderConfidenceChart() {
+  const chart = $('#confidence-chart');
+  chart.innerHTML = '';
+
+  if (!state.fields || state.fields.length === 0) {
+    chart.innerHTML = '<span style="color:var(--subtext);font-size:12px">데이터 없음</span>';
+    return;
+  }
+
+  // Bucket into 10 bins (0-10%, 10-20%, ..., 90-100%)
+  const bins = new Array(10).fill(0);
+  state.fields.forEach(f => {
+    const bucket = Math.min(9, Math.floor(f.confidence * 10));
+    bins[bucket]++;
+  });
+
+  const maxVal = Math.max(...bins, 1);
+  bins.forEach((count, i) => {
+    const bar = document.createElement('div');
+    bar.className = 'conf-bar';
+    bar.style.height = (count / maxVal * 100) + '%';
+    if (i < 5) bar.classList.add('low');
+    else if (i < 8) bar.classList.add('medium');
+    else bar.classList.add('high');
+    bar.title = `${i * 10}-${(i + 1) * 10}%: ${count}개`;
+    chart.appendChild(bar);
+  });
+}
+
+function renderErrorByType() {
+  const container = $('#error-by-type');
+  container.innerHTML = '';
+
+  if (!state.fields) return;
+
+  const typeCounts = {};
+  state.fields.forEach(f => {
+    if (f.status !== 'ok' && f.status !== 'unchecked') {
+      typeCounts[f.field_type] = (typeCounts[f.field_type] || 0) + 1;
+    }
+  });
+
+  const entries = Object.entries(typeCounts).sort((a, b) => b[1] - a[1]);
+  if (entries.length === 0) {
+    container.innerHTML = '<span style="color:var(--subtext);font-size:12px">오류 필드 없음</span>';
+    return;
+  }
+
+  const maxCount = entries[0][1];
+  entries.forEach(([type, count]) => {
+    const row = document.createElement('div');
+    row.className = 'error-type-row';
+    row.innerHTML = `
+      <span class="type-name">${type}</span>
+      <div class="bar-bg"><div class="bar-fill" style="width:${count / maxCount * 100}%"></div></div>
+      <span class="type-count">${count}</span>
+    `;
+    container.appendChild(row);
   });
 }

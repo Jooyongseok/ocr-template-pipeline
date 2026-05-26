@@ -296,3 +296,19 @@ class DataStore:
                         "edited_at": entry.get("edited_at", ""),
                     })
         return corrections
+
+    def get_all_corrections(self) -> list[dict]:
+        """모든 수정 데이터를 원격 동기화용 포맷으로 반환한다."""
+        corrections = []
+        for did in self.list_documents():
+            history = self.get_edit_history(did)
+            for entry in history:
+                corrections.append({
+                    "document_id": did,
+                    "field_key": entry.get("field_key", ""),
+                    "original_text": entry.get("original_value", ""),
+                    "corrected_text": entry.get("edited_value", ""),
+                    "original_confidence": entry.get("original_confidence", 0.0),
+                    "corrected_at": entry.get("edited_at", ""),
+                })
+        return corrections

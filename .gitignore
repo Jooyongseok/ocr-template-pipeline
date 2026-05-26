@@ -5,3 +5,18 @@ output/
 input/*.pdf
 *.egg-info/
 .ipynb_checkpoints/
+.env
+../.env
+
+# Large model files (33GB)
+handwriting_ocr/checkpoints/
+handwriting_ocr/data/
+handwriting_ocr/*.tar.gz
+
+# Claude/wrangler local config
+.claude/
+.wrangler/
+
+# Temporary
+*.tmp
+.DS_Store

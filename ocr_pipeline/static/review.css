@@ -397,3 +397,180 @@ select {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* ── Field search ── */
+#field-search {
+  width: 100%;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  margin-bottom: 4px;
+  outline: none;
+}
+#field-search:focus { border-color: var(--blue); }
+#field-search::placeholder { color: var(--overlay); }
+
+/* ── Quick-fix toolbar ── */
+.quickfix-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.quickfix-label {
+  font-size: 11px;
+  color: var(--subtext);
+  margin-right: 4px;
+}
+.quickfix-btn {
+  font-size: 11px;
+  padding: 2px 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--subtext);
+  cursor: pointer;
+}
+.quickfix-btn:hover { background: var(--overlay); color: var(--text); }
+
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.15s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal-content {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  min-width: 420px;
+  max-width: 520px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.modal-content.modal-wide {
+  min-width: 600px;
+  max-width: 720px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.modal-header h2 { font-size: 18px; color: var(--blue); }
+.modal-close {
+  font-size: 20px;
+  background: none;
+  border: none;
+  color: var(--subtext);
+  cursor: pointer;
+  padding: 0 4px;
+}
+.modal-close:hover { color: var(--text); }
+
+/* ── Shortcut grid ── */
+.shortcut-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.shortcut-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.shortcut-item kbd {
+  display: inline-block;
+  min-width: 100px;
+  text-align: center;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-family: monospace;
+  font-size: 13px;
+  color: var(--peach);
+}
+.shortcut-item span { font-size: 13px; color: var(--text); }
+
+/* ── Stats modal ── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.stat-card {
+  background: var(--bg);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-align: center;
+  border: 1px solid var(--border);
+}
+.stat-card.stat-green { border-color: var(--green); }
+.stat-card.stat-yellow { border-color: var(--yellow); }
+.stat-card.stat-red { border-color: var(--red); }
+.stat-value { font-size: 28px; font-weight: 700; color: var(--text); }
+.stat-label { font-size: 12px; color: var(--subtext); margin-top: 4px; }
+
+.stats-section { margin-bottom: 16px; }
+.stats-section h3 { font-size: 14px; color: var(--subtext); margin-bottom: 8px; }
+
+.confidence-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 80px;
+  padding: 4px 0;
+}
+.conf-bar {
+  flex: 1;
+  background: var(--blue);
+  border-radius: 2px 2px 0 0;
+  position: relative;
+  min-width: 4px;
+  transition: height 0.3s ease;
+}
+.conf-bar.low { background: var(--red); }
+.conf-bar.medium { background: var(--yellow); }
+.conf-bar.high { background: var(--green); }
+
+.error-by-type { display: flex; flex-direction: column; gap: 4px; }
+.error-type-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.error-type-row .bar-bg {
+  flex: 1;
+  height: 16px;
+  background: var(--bg);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.error-type-row .bar-fill {
+  height: 100%;
+  background: var(--peach);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+.error-type-row .type-name { min-width: 120px; color: var(--subtext); }
+.error-type-row .type-count { min-width: 40px; text-align: right; color: var(--text); }
+
+.al-stats-detail { font-size: 13px; color: var(--text); line-height: 1.8; }

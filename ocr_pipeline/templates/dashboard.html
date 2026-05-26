@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OCR Pipeline</title>
+<style>
+  :root {
+    --bg: #09090b; --surface: #18181b; --card: #27272a; --border: #3f3f46;
+    --text: #fafafa; --muted: #a1a1aa; --primary: #6366f1; --pl: #818cf8;
+    --green: #22c55e; --yellow: #eab308; --red: #ef4444; --orange: #f97316;
+    --teal: #14b8a6; --r: 10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+  /* Nav */
+  nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:52px;gap:16px;position:sticky;top:0;z-index:50}
+  nav .logo{font-size:17px;font-weight:700;color:var(--pl);margin-right:16px}
+  nav a{color:var(--muted);text-decoration:none;font-size:13px;padding:6px 14px;border-radius:6px;transition:all .15s}
+  nav a:hover,nav a.on{color:var(--text);background:var(--card)}
+  nav .spacer{flex:1}
+  nav .user{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+  nav .user input{background:var(--card);border:1px solid var(--border);border-radius:5px;padding:4px 10px;color:var(--text);font-size:12px;width:110px}
+
+  main{max-width:1100px;margin:0 auto;padding:28px 24px}
+
+  /* Section title */
+  .sec-title{font-size:22px;font-weight:700;margin-bottom:6px}
+  .sec-desc{font-size:13px;color:var(--muted);margin-bottom:24px}
+
+  /* Template banner (always visible) */
+  .tpl-banner{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:28px}
+  .tpl-banner h3{font-size:15px;color:var(--pl);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .tpl-banner .badge{background:var(--primary);color:#fff;font-size:10px;padding:2px 8px;border-radius:4px;font-weight:600}
+  .tpl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+  .tpl-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;cursor:pointer;transition:all .15s;position:relative}
+  .tpl-card:hover{border-color:var(--pl);transform:translateY(-1px)}
+  .tpl-card.sel{border-color:var(--green);background:rgba(34,197,94,.06)}
+  .tpl-card h4{font-size:14px;margin-bottom:2px}
+  .tpl-card .m{font-size:11px;color:var(--muted)}
+  .tpl-card .tag{position:absolute;top:8px;right:8px;background:var(--primary);color:#fff;font-size:9px;padding:1px 6px;border-radius:3px;font-weight:600}
+  .tpl-empty{color:var(--muted);font-size:13px;padding:12px}
+
+  /* Mode tabs */
+  .tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:0}
+  .tab{padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;transition:all .15s}
+  .tab:hover{color:var(--text)}
+  .tab.on{color:var(--pl);border-bottom-color:var(--pl)}
+
+  /* Panels */
+  .pnl{display:none}
+  .pnl.on{display:block}
+
+  /* Upload */
+  .upload{border:2px dashed var(--border);border-radius:var(--r);padding:28px;text-align:center;cursor:pointer;transition:border-color .2s;margin-bottom:14px}
+  .upload:hover{border-color:var(--pl)}
+  .upload.over{border-color:var(--green);background:rgba(34,197,94,.04)}
+  .upload p{font-size:14px;color:var(--muted)}
+  .upload .h{font-size:11px;color:var(--border);margin-top:6px}
+  .upload input[type=file]{display:none}
+
+  /* File list */
+  .flist{list-style:none;font-size:13px;margin-bottom:12px}
+  .flist li{padding:5px 10px;background:var(--card);border-radius:5px;margin-bottom:3px;display:flex;justify-content:space-between;align-items:center}
+  .flist .fn{color:var(--text)}.flist .fs{color:var(--muted);font-size:11px}.flist .fx{color:var(--red);cursor:pointer;font-size:11px}
+
+  /* Buttons */
+  .btn{padding:10px 20px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;cursor:pointer;transition:all .15s;text-decoration:none;display:inline-block}
+  .btn:hover{background:var(--border)}
+  .btn-p{background:var(--primary);border-color:var(--primary);color:#fff}
+  .btn-p:hover{opacity:.9}
+  .btn-g{background:var(--green);border-color:var(--green);color:var(--bg);font-weight:600}
+  .btn-g:hover{opacity:.9}
+  .btn-lg{padding:12px 28px;font-size:15px}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px}
+
+  /* Status */
+  .st{background:var(--card);border-radius:8px;padding:10px 14px;margin-top:12px;font-size:13px}
+  .st.ok{border-left:4px solid var(--green)}.st.er{border-left:4px solid var(--red)}.st.nfo{border-left:4px solid var(--pl)}
+
+  hr.div{border:none;border-top:1px solid var(--border);margin:20px 0}
+
+  /* Form */
+  select{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text);font-size:13px;min-width:220px}
+
+  /* Steps */
+  .steps{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+  .stp{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);padding:4px 10px;background:var(--card);border-radius:6px}
+  .stp.on{color:var(--pl);background:rgba(99,102,241,.1)}
+  .stp .n{width:22px;height:22px;border-radius:50%;border:2px solid currentColor;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px}
+  .stp.on .n{background:var(--primary);border-color:var(--primary);color:#fff}
+  .sarr{color:var(--border);font-size:14px}
+
+  /* Excel result */
+  .excel-fields{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0}
+  .excel-fields span{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:11px}
+</style>
+</head>
+<body>
+
+<!-- Nav (shared across all pages) -->
+<nav>
+  <span class="logo">OCR Pipeline</span>
+  <a href="/" class="on">Dashboard</a>
+  <a href="/review">검수</a>
+  <span class="spacer"></span>
+  <div class="user">
+    사용자:
+    <input type="text" id="uid" value="default" placeholder="사용자 ID">
+  </div>
+</nav>
+
+<main>
+  <div class="sec-title">OCR 문서 추출 시스템</div>
+  <div class="sec-desc">템플릿을 선택하고, PDF를 업로드하면, OCR로 텍스트를 추출하여 검수할 수 있습니다.</div>
+
+  <!-- ── 저장된 템플릿 (항상 표시) ── -->
+  <div class="tpl-banner">
+    <h3><span class="badge">TEMPLATE</span> 저장된 템플릿 목록</h3>
+    <div id="tpl-list" class="tpl-grid">
+      <div class="tpl-empty">로딩 중...</div>
+    </div>
+  </div>
+
+  <!-- ── Mode Tabs ── -->
+  <div class="tabs">
+    <div class="tab on" data-tab="ocr" onclick="switchTab('ocr')">PDF 업로드 + OCR</div>
+    <div class="tab" data-tab="tpl" onclick="switchTab('tpl')">새 템플릿 만들기</div>
+    <div class="tab" data-tab="batch" onclick="switchTab('batch')">배치 처리 (여러 장)</div>
+  </div>
+
+  <!-- ═══ Tab: OCR (단건) ═══ -->
+  <div id="pnl-ocr" class="pnl on">
+    <div class="steps">
+      <div class="stp on"><span class="n">1</span>템플릿 선택</div>
+      <span class="sarr">&rarr;</span>
+      <div class="stp"><span class="n">2</span>PDF 업로드</div>
+      <span class="sarr">&rarr;</span>
+      <div class="stp"><span class="n">3</span>OCR 실행</div>
+      <span class="sarr">&rarr;</span>
+      <div class="stp"><span class="n">4</span>검수</div>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <label style="font-size:13px;color:var(--muted)">사용할 템플릿:</label>
+      <select id="sel-tpl"></select>
+    </div>
+
+    <div class="upload" id="up-single">
+      <p>PDF 파일을 드래그하거나 클릭하여 업로드</p>
+      <div class="h">1개 파일 (단건 처리)</div>
+      <input type="file" id="fi-single" accept=".pdf">
+    </div>
+    <ul id="fl-single" class="flist"></ul>
+
+    <div class="btn-row">
+      <button class="btn btn-g btn-lg" id="btn-ocr" disabled>OCR 실행</button>
+      <a href="/review" class="btn btn-p" id="btn-rev" style="display:none">검수 페이지로 이동 &rarr;</a>
+    </div>
+    <div id="st-single"></div>
+  </div>
+
+  <!-- ═══ Tab: Template Creation ═══ -->
+  <div id="pnl-tpl" class="pnl">
+    <div class="steps">
+      <div class="stp on"><span class="n">1</span>PDF 업로드</div>
+      <span class="sarr">&rarr;</span>
+      <div class="stp"><span class="n">2</span>바운딩 박스 그리기</div>
+      <span class="sarr">&rarr;</span>
+      <div class="stp"><span class="n">3</span>필드 타입 선택</div>
+      <span class="sarr">&rarr;</span>
+      <div class="stp"><span class="n">4</span>템플릿 저장</div>
+    </div>
+
+    <p style="font-size:14px;color:var(--text);margin-bottom:16px">
+      새로운 문서 양식에 대한 템플릿을 만들려면 템플릿 편집기를 실행하세요.<br>
+      <span style="color:var(--muted);font-size:12px">터미널에서: <code style="background:var(--card);padding:2px 6px;border-radius:4px">cd template_editor && python app.py</code> 후 아래 버튼 클릭</span>
+    </p>
+    <div class="btn-row" style="margin-top:0;margin-bottom:20px">
+      <a href="http://localhost:5000" target="_blank" class="btn btn-p btn-lg">템플릿 편집기 열기 (포트 5000)</a>
+    </div>
+
+    <hr class="div">
+
+    <h3 style="font-size:15px;color:var(--pl);margin-bottom:12px">엑셀 틀에서 필드 가져오기</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px">
+      채워야 할 엑셀 파일(.xlsx)을 업로드하면 컬럼명에서 필드를 자동 추출합니다.
+    </p>
+    <div class="upload" id="up-excel">
+      <p>엑셀 파일(.xlsx)을 드래그하거나 클릭</p>
+      <input type="file" id="fi-excel" accept=".xlsx,.xls">
+    </div>
+    <div id="excel-res"></div>
+  </div>
+
+  <!-- ═══ Tab: Batch ═══ -->
+  <div id="pnl-batch" class="pnl">
+    <div class="steps">
+      <div class="stp on"><span class="n">1</span>템플릿 선택</div>
+      <span class="sarr">&rarr;</span>
+      <div class="stp"><span class="n">2</span>PDF 여러 장 업로드</div>
+      <span class="sarr">&rarr;</span>
+      <div class="stp"><span class="n">3</span>일괄 OCR</div>
+      <span class="sarr">&rarr;</span>
+      <div class="stp"><span class="n">4</span>검수 + 엑셀</div>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <label style="font-size:13px;color:var(--muted)">사용할 템플릿:</label>
+      <select id="sel-tpl-b"></select>
+    </div>
+
+    <div class="upload" id="up-batch">
+      <p>PDF 파일 여러 장을 드래그하거나 클릭</p>
+      <div class="h">Ctrl/Cmd + 클릭으로 복수 선택</div>
+      <input type="file" id="fi-batch" accept=".pdf" multiple>
+    </div>
+    <ul id="fl-batch" class="flist"></ul>
+
+    <div class="btn-row">
+      <button class="btn btn-g btn-lg" id="btn-batch" disabled>일괄 OCR 실행</button>
+      <a href="/review" class="btn btn-p" id="btn-rev-b" style="display:none">검수 페이지로 이동 &rarr;</a>
+    </div>
+    <div id="st-batch"></div>
+
+    <hr class="div">
+    <h3 style="font-size:14px;color:var(--muted);margin-bottom:8px">현재 input/ 폴더</h3>
+    <ul id="ex-pdfs" class="flist"></ul>
+  </div>
+</main>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
+let sF=[],bF=[];
+
+// ── Tab switch ──
+function switchTab(t){
+  $$('.tab').forEach(e=>e.classList.toggle('on',e.dataset.tab===t));
+  $$('.pnl').forEach(p=>p.classList.remove('on'));
+  $(`#pnl-${t}`).classList.add('on');
+  if(t==='batch') loadExPdfs();
+}
+
+// ── Templates (always load on init) ──
+async function loadTpls(){
+  const r=await fetch('/api/templates').then(x=>x.json());
+  const c=$('#tpl-list');
+  const tpls=r.templates||[];
+  c.innerHTML='';
+  if(!tpls.length){c.innerHTML='<div class="tpl-empty">저장된 템플릿이 없습니다. "새 템플릿 만들기" 탭에서 생성하세요.</div>';return;}
+  tpls.forEach(t=>{
+    const d=document.createElement('div');
+    d.className='tpl-card';
+    d.innerHTML=`<span class="tag">TEMPLATE</span><h4>${t.document_name||t.template_id}</h4><div class="m">${t.field_count}개 필드 | ${t.filename}</div>`;
+    c.appendChild(d);
+  });
+  // populate selectors
+  ['sel-tpl','sel-tpl-b'].forEach(id=>{
+    const s=$(`#${id}`);
+    s.innerHTML='<option value="">-- 템플릿을 선택하세요 --</option>';
+    tpls.forEach(t=>{
+      const o=document.createElement('option');
+      o.value=t.filename;
+      o.textContent=`${t.document_name||t.template_id} (${t.field_count}개 필드)`;
+      s.appendChild(o);
+    });
+  });
+}
+
+// ── Upload setup ──
+function setupUp(aid,fid,arr,lid,multi){
+  const a=$(`#${aid}`),inp=$(`#${fid}`);
+  a.onclick=()=>inp.click();
+  a.ondragover=e=>{e.preventDefault();a.classList.add('over')};
+  a.ondragleave=()=>a.classList.remove('over');
+  a.ondrop=e=>{e.preventDefault();a.classList.remove('over');addF(e.dataTransfer.files,arr,lid,multi)};
+  inp.onchange=()=>{addF(inp.files,arr,lid,multi);inp.value=''};
+}
+function addF(fl,arr,lid,multi){
+  const nf=Array.from(fl).filter(f=>f.name.toLowerCase().endsWith('.pdf'));
+  if(!multi)arr.length=0;
+  nf.forEach(f=>arr.push(f));
+  renderFL(arr,lid);
+  updBtn();
+}
+function renderFL(arr,lid){
+  const u=$(`#${lid}`);u.innerHTML='';
+  arr.forEach((f,i)=>{
+    const l=document.createElement('li');
+    l.innerHTML=`<span class="fn">${f.name}</span><span class="fs">${(f.size/1024).toFixed(1)}KB</span><span class="fx" data-i="${i}" data-l="${lid}">&times;</span>`;
+    l.querySelector('.fx').onclick=function(){
+      const a=this.dataset.l==='fl-single'?sF:bF;
+      a.splice(+this.dataset.i,1);renderFL(a,this.dataset.l);updBtn();
+    };
+    u.appendChild(l);
+  });
+}
+function updBtn(){
+  $('#btn-ocr').disabled=!(sF.length&&$('#sel-tpl').value);
+  $('#btn-batch').disabled=!(bF.length&&$('#sel-tpl-b').value);
+}
+
+// ── Run OCR ──
+async function runOCR(files,tpl,stId,rvId){
+  const st=$(`#${stId}`);
+  st.innerHTML='<div class="st nfo">PDF 업로드 중...</div>';
+  const fd=new FormData();
+  files.forEach(f=>fd.append('files',f));
+  const up=await fetch('/api/upload-pdf',{method:'POST',body:fd}).then(r=>r.json());
+  if(!up.ok){st.innerHTML=`<div class="st er">업로드 실패: ${up.error}</div>`;return;}
+  st.innerHTML=`<div class="st ok">${up.count}개 PDF 업로드 완료</div>`;
+  const uid=$('#uid').value||'default';
+  const run=await fetch('/api/run-ocr',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({template:tpl,pdf_files:up.saved,user_id:uid})}).then(r=>r.json());
+  if(run.ok){
+    st.innerHTML+=`<div class="st nfo" style="margin-top:8px"><strong>${run.pdf_count}개 PDF 준비 완료</strong><br><code style="font-size:11px;color:var(--muted);word-break:break-all">${run.message}</code></div>`;
+    $(`#${rvId}`).style.display='inline-block';
+  }else{st.innerHTML+=`<div class="st er" style="margin-top:8px">${run.error}</div>`;}
+}
+
+// ── Excel schema ──
+function setupExcel(){
+  const a=$('#up-excel'),inp=$('#fi-excel');
+  a.onclick=()=>inp.click();
+  a.ondragover=e=>{e.preventDefault();a.classList.add('over')};
+  a.ondragleave=()=>a.classList.remove('over');
+  a.ondrop=e=>{e.preventDefault();a.classList.remove('over');doExcel(e.dataTransfer.files[0])};
+  inp.onchange=()=>{if(inp.files[0])doExcel(inp.files[0])};
+}
+async function doExcel(file){
+  const fd=new FormData();fd.append('file',file);
+  const r=await fetch('/api/upload-excel-schema',{method:'POST',body:fd}).then(x=>x.json()).catch(()=>null);
+  const c=$('#excel-res');
+  if(!r||r.error){c.innerHTML=`<div class="st er">${r?.error||'업로드 실패'}</div>`;return;}
+  let h=`<div class="st ok">${r.filename}: ${r.total_fields}개 필드 추출</div>`;
+  Object.entries(r.sheets).forEach(([sn,cols])=>{
+    h+=`<div style="margin-top:8px"><strong style="font-size:12px;color:var(--pl)">${sn}</strong> (${cols.length}개)</div><div class="excel-fields">`;
+    cols.forEach(c=>{h+=`<span>${c}</span>`});
+    h+='</div>';
+  });
+  h+='<p style="font-size:12px;color:var(--muted);margin-top:8px">이 필드들로 템플릿 편집기에서 바운딩 박스를 그려주세요.</p>';
+  c.innerHTML=h;
+}
+
+// ── Existing PDFs ──
+async function loadExPdfs(){
+  const r=await fetch('/api/input-pdfs').then(x=>x.json());
+  const u=$('#ex-pdfs');u.innerHTML='';
+  (r.pdfs||[]).forEach(p=>{
+    const l=document.createElement('li');
+    l.innerHTML=`<span class="fn">${p.filename}</span><span class="fs">${p.size_kb}KB</span>`;
+    u.appendChild(l);
+  });
+  if(!r.pdfs?.length)u.innerHTML='<li><span class="fn" style="color:var(--muted)">PDF 없음</span></li>';
+}
+
+// ── Init ──
+document.addEventListener('DOMContentLoaded',()=>{
+  loadTpls();
+  setupUp('up-single','fi-single',sF,'fl-single',false);
+  setupUp('up-batch','fi-batch',bF,'fl-batch',true);
+  setupExcel();
+  $('#sel-tpl').onchange=updBtn;
+  $('#sel-tpl-b').onchange=updBtn;
+  $('#btn-ocr').onclick=()=>runOCR(sF,$('#sel-tpl').value,'st-single','btn-rev');
+  $('#btn-batch').onclick=()=>runOCR(bF,$('#sel-tpl-b').value,'st-batch','btn-rev-b');
+  const su=localStorage.getItem('ocr_uid');
+  if(su)$('#uid').value=su;
+  $('#uid').onchange=()=>localStorage.setItem('ocr_uid',$('#uid').value);
+});
+</script>
+</body>
+</html>

@@ -6,7 +6,7 @@ from pathlib import Path
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
-from validator import mask_rrn, mask_account
+from .validator import mask_rrn, mask_account
 
 
 # 스타일
