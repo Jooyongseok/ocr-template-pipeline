@@ -347,7 +347,7 @@ function redraw() {
   fields.forEach((f, i) => {
     const b = bboxToPixel(f.bbox_norm);
     const color = groupColors[f.group] || '#999';
-    const alpha = (i === selectedIdx) ? 0.25 : 0.12;
+    const alpha = (i === selectedIdx) ? 0.18 : 0.08;
 
     ctx.fillStyle = hexToRgba(color, alpha);
     ctx.fillRect(b.x, b.y, b.w, b.h);
@@ -644,6 +644,14 @@ async function loadTemplate(filename) {
   const t = data.template;
   document.getElementById('templateId').value = t.template_id || '';
   document.getElementById('docName').value = t.document_name || '';
+
+  // Load group colors from template if defined
+  if (t.groups) {
+    Object.entries(t.groups).forEach(([gname, gdata]) => {
+      if (gdata.color) groupColors[gname] = gdata.color;
+      if (!groups.includes(gname)) groups.push(gname);
+    });
+  }
 
   fields = (t.fields || []).map(f => ({
     key: f.key,
