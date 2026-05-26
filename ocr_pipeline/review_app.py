@@ -120,13 +120,17 @@ def create_app(work_dir: str = "work", output_dir: str = "output") -> Flask:
                 ocr_results = registry.process_requests(requests_list)
 
                 # 3. 검증 + 저장
+                # request 원본 데이터를 key로 매핑 (crop_path, bbox_norm 등)
+                req_map = {r["field_key"]: r for r in requests_list}
+
                 fields = {}
                 review_count = 0
                 for res in ocr_results:
                     validated = validate_result(res)
                     fk = res["field_key"]
+                    orig_req = req_map.get(fk, {})
                     fields[fk] = {
-                        "label": res.get("field_label", fk),
+                        "label": orig_req.get("field_label", res.get("field_label", fk)),
                         "field_type": res.get("field_type", "text"),
                         "value": validated.get("value", res.get("value", "")),
                         "raw_text": res.get("text", ""),
@@ -134,9 +138,9 @@ def create_app(work_dir: str = "work", output_dir: str = "output") -> Flask:
                         "status": validated.get("status", "ok"),
                         "warning": validated.get("warning"),
                         "candidates": res.get("candidates", []),
-                        "bbox_norm": res.get("bbox_norm"),
-                        "crop_path": res.get("crop_path", ""),
-                        "required": res.get("required", False),
+                        "bbox_norm": orig_req.get("bbox_norm"),
+                        "crop_path": orig_req.get("crop_path", ""),
+                        "required": orig_req.get("required", False),
                         "edited": False,
                     }
                     if validated.get("status") not in ("ok", "unchecked"):
