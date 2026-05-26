@@ -1,115 +1,869 @@
 {
   "template_id": "agriculture_subsidy_page1",
   "document_name": "기본직접지불금 지급대상자 등록신청서 (농업인용)",
-  "description": "농업 농촌 공익기능 증진 직접지불제도 운영에 관한 법률 시행규칙 [별지 제2호서식]",
-  "page_scope": [1],
+  "description": "[별지 제2호서식] 픽셀 정밀 측정 좌표",
+  "page_scope": [
+    1
+  ],
   "coordinate_system": "normalized",
   "page_width": 1753,
   "page_height": 1240,
   "created_at": "2026-05-26",
   "fields": [
-    {"key": "receipt_no", "label": "접수번호", "page": 1, "group": "header", "field_type": "text", "required": false, "bbox_norm": [0.605, 0.042, 0.12, 0.022]},
-    {"key": "receipt_date", "label": "접수일자", "page": 1, "group": "header", "field_type": "date", "required": false, "bbox_norm": [0.73, 0.042, 0.12, 0.022]},
-    {"key": "farm_business_no", "label": "농업경영체 등록번호", "page": 1, "group": "header", "field_type": "number_text", "required": false, "bbox_norm": [0.855, 0.042, 0.13, 0.022]},
-
-    {"key": "applicant_name", "label": "등록신청인 성명", "page": 1, "group": "applicant", "field_type": "korean_name", "required": true, "bbox_norm": [0.175, 0.115, 0.1, 0.025]},
-    {"key": "applicant_rrn", "label": "등록신청인 주민등록번호", "page": 1, "group": "applicant", "field_type": "resident_number", "required": true, "bbox_norm": [0.285, 0.115, 0.155, 0.025]},
-    {"key": "applicant_account", "label": "계좌번호 은행명", "page": 1, "group": "applicant", "field_type": "account", "required": false, "bbox_norm": [0.45, 0.115, 0.2, 0.025]},
-    {"key": "applicant_address", "label": "등록신청인 주소", "page": 1, "group": "applicant", "field_type": "address", "required": true, "bbox_norm": [0.66, 0.115, 0.22, 0.025]},
-    {"key": "applicant_phone", "label": "등록신청인 전화번호", "page": 1, "group": "applicant", "field_type": "phone", "required": false, "bbox_norm": [0.89, 0.115, 0.1, 0.025]},
-
-    {"key": "manager_name", "label": "경영주 성명", "page": 1, "group": "manager", "field_type": "korean_name", "required": false, "bbox_norm": [0.175, 0.155, 0.1, 0.025]},
-    {"key": "manager_rrn", "label": "경영주 주민등록번호", "page": 1, "group": "manager", "field_type": "resident_number", "required": false, "bbox_norm": [0.285, 0.155, 0.155, 0.025]},
-    {"key": "manager_application_type", "label": "경영주 신청유형", "page": 1, "group": "manager", "field_type": "text", "required": false, "bbox_norm": [0.45, 0.155, 0.1, 0.025]},
-    {"key": "manager_address", "label": "경영주 주소", "page": 1, "group": "manager", "field_type": "address", "required": false, "bbox_norm": [0.56, 0.155, 0.22, 0.025]},
-    {"key": "manager_phone", "label": "경영주 전화번호", "page": 1, "group": "manager", "field_type": "phone", "required": false, "bbox_norm": [0.79, 0.155, 0.1, 0.025]},
-    {"key": "livestock_farm_checked", "label": "축산농가 체크", "page": 1, "group": "manager", "field_type": "checkbox", "required": false, "bbox_norm": [0.895, 0.148, 0.02, 0.018]},
-    {"key": "facility_farm_checked", "label": "시설농가 체크", "page": 1, "group": "manager", "field_type": "checkbox", "required": false, "bbox_norm": [0.895, 0.168, 0.02, 0.018]},
-    {"key": "manager_village", "label": "경영주 마을명", "page": 1, "group": "manager", "field_type": "text", "required": false, "bbox_norm": [0.175, 0.185, 0.1, 0.022]},
-
-    {"key": "other_farmer_name", "label": "경영주 외 성명", "page": 1, "group": "other_farmer", "field_type": "korean_name", "required": false, "bbox_norm": [0.175, 0.215, 0.1, 0.025]},
-    {"key": "other_farmer_birth", "label": "경영주 외 생년월일", "page": 1, "group": "other_farmer", "field_type": "date_or_birth", "required": false, "bbox_norm": [0.285, 0.215, 0.1, 0.025]},
-    {"key": "other_farmer_no", "label": "경영주 외 농업인번호", "page": 1, "group": "other_farmer", "field_type": "number_text", "required": false, "bbox_norm": [0.395, 0.215, 0.1, 0.025]},
-    {"key": "other_farmer_relation", "label": "경영주와의 관계", "page": 1, "group": "other_farmer", "field_type": "relation", "required": false, "bbox_norm": [0.505, 0.215, 0.08, 0.025]},
-
-    {"key": "family_1_left_relation", "label": "가족1행좌 관계", "page": 1, "group": "family", "field_type": "relation", "required": false, "bbox_norm": [0.06, 0.35, 0.065, 0.025]},
-    {"key": "family_1_left_name", "label": "가족1행좌 성명", "page": 1, "group": "family", "field_type": "korean_name", "required": false, "bbox_norm": [0.13, 0.35, 0.09, 0.025]},
-    {"key": "family_1_left_rrn", "label": "가족1행좌 주민번호", "page": 1, "group": "family", "field_type": "resident_number", "required": false, "bbox_norm": [0.225, 0.35, 0.14, 0.025]},
-    {"key": "family_1_right_relation", "label": "가족1행우 관계", "page": 1, "group": "family", "field_type": "relation", "required": false, "bbox_norm": [0.555, 0.35, 0.065, 0.025]},
-    {"key": "family_1_right_name", "label": "가족1행우 성명", "page": 1, "group": "family", "field_type": "korean_name", "required": false, "bbox_norm": [0.625, 0.35, 0.09, 0.025]},
-    {"key": "family_1_right_rrn", "label": "가족1행우 주민번호", "page": 1, "group": "family", "field_type": "resident_number", "required": false, "bbox_norm": [0.72, 0.35, 0.14, 0.025]},
-
-    {"key": "family_2_left_relation", "label": "가족2행좌 관계", "page": 1, "group": "family", "field_type": "relation", "required": false, "bbox_norm": [0.06, 0.38, 0.065, 0.025]},
-    {"key": "family_2_left_name", "label": "가족2행좌 성명", "page": 1, "group": "family", "field_type": "korean_name", "required": false, "bbox_norm": [0.13, 0.38, 0.09, 0.025]},
-    {"key": "family_2_left_rrn", "label": "가족2행좌 주민번호", "page": 1, "group": "family", "field_type": "resident_number", "required": false, "bbox_norm": [0.225, 0.38, 0.14, 0.025]},
-    {"key": "family_2_right_relation", "label": "가족2행우 관계", "page": 1, "group": "family", "field_type": "relation", "required": false, "bbox_norm": [0.555, 0.38, 0.065, 0.025]},
-    {"key": "family_2_right_name", "label": "가족2행우 성명", "page": 1, "group": "family", "field_type": "korean_name", "required": false, "bbox_norm": [0.625, 0.38, 0.09, 0.025]},
-    {"key": "family_2_right_rrn", "label": "가족2행우 주민번호", "page": 1, "group": "family", "field_type": "resident_number", "required": false, "bbox_norm": [0.72, 0.38, 0.14, 0.025]},
-
-    {"key": "family_3_left_relation", "label": "가족3행좌 관계", "page": 1, "group": "family", "field_type": "relation", "required": false, "bbox_norm": [0.06, 0.41, 0.065, 0.025]},
-    {"key": "family_3_left_name", "label": "가족3행좌 성명", "page": 1, "group": "family", "field_type": "korean_name", "required": false, "bbox_norm": [0.13, 0.41, 0.09, 0.025]},
-    {"key": "family_3_left_rrn", "label": "가족3행좌 주민번호", "page": 1, "group": "family", "field_type": "resident_number", "required": false, "bbox_norm": [0.225, 0.41, 0.14, 0.025]},
-    {"key": "family_3_right_relation", "label": "가족3행우 관계", "page": 1, "group": "family", "field_type": "relation", "required": false, "bbox_norm": [0.555, 0.41, 0.065, 0.025]},
-    {"key": "family_3_right_name", "label": "가족3행우 성명", "page": 1, "group": "family", "field_type": "korean_name", "required": false, "bbox_norm": [0.625, 0.41, 0.09, 0.025]},
-    {"key": "family_3_right_rrn", "label": "가족3행우 주민번호", "page": 1, "group": "family", "field_type": "resident_number", "required": false, "bbox_norm": [0.72, 0.41, 0.14, 0.025]},
-
-    {"key": "family_4_left_relation", "label": "가족4행좌 관계", "page": 1, "group": "family", "field_type": "relation", "required": false, "bbox_norm": [0.06, 0.44, 0.065, 0.025]},
-    {"key": "family_4_left_name", "label": "가족4행좌 성명", "page": 1, "group": "family", "field_type": "korean_name", "required": false, "bbox_norm": [0.13, 0.44, 0.09, 0.025]},
-    {"key": "family_4_left_rrn", "label": "가족4행좌 주민번호", "page": 1, "group": "family", "field_type": "resident_number", "required": false, "bbox_norm": [0.225, 0.44, 0.14, 0.025]},
-    {"key": "family_4_right_relation", "label": "가족4행우 관계", "page": 1, "group": "family", "field_type": "relation", "required": false, "bbox_norm": [0.555, 0.44, 0.065, 0.025]},
-    {"key": "family_4_right_name", "label": "가족4행우 성명", "page": 1, "group": "family", "field_type": "korean_name", "required": false, "bbox_norm": [0.625, 0.44, 0.09, 0.025]},
-    {"key": "family_4_right_rrn", "label": "가족4행우 주민번호", "page": 1, "group": "family", "field_type": "resident_number", "required": false, "bbox_norm": [0.72, 0.44, 0.14, 0.025]},
-
-    {"key": "family_separated_1_relation", "label": "별거1행 관계", "page": 1, "group": "family_separated", "field_type": "relation", "required": false, "bbox_norm": [0.06, 0.50, 0.065, 0.025]},
-    {"key": "family_separated_1_name", "label": "별거1행 성명", "page": 1, "group": "family_separated", "field_type": "korean_name", "required": false, "bbox_norm": [0.13, 0.50, 0.09, 0.025]},
-    {"key": "family_separated_1_rrn", "label": "별거1행 주민번호", "page": 1, "group": "family_separated", "field_type": "resident_number", "required": false, "bbox_norm": [0.225, 0.50, 0.14, 0.025]},
-    {"key": "family_separated_2_relation", "label": "별거2행 관계", "page": 1, "group": "family_separated", "field_type": "relation", "required": false, "bbox_norm": [0.555, 0.50, 0.065, 0.025]},
-    {"key": "family_separated_2_name", "label": "별거2행 성명", "page": 1, "group": "family_separated", "field_type": "korean_name", "required": false, "bbox_norm": [0.625, 0.50, 0.09, 0.025]},
-    {"key": "family_separated_2_rrn", "label": "별거2행 주민번호", "page": 1, "group": "family_separated", "field_type": "resident_number", "required": false, "bbox_norm": [0.72, 0.50, 0.14, 0.025]},
-
-    {"key": "family_info_confirm_checked", "label": "가족관계 확인 체크", "page": 1, "group": "confirm", "field_type": "checkbox", "required": false, "bbox_norm": [0.04, 0.835, 0.02, 0.018]}
+    {
+      "key": "receipt_no",
+      "label": "접수번호",
+      "page": 1,
+      "group": "header",
+      "field_type": "text",
+      "required": false,
+      "bbox_norm": [
+        0.0245,
+        0.1056,
+        0.0827,
+        0.0185
+      ]
+    },
+    {
+      "key": "receipt_date",
+      "label": "접수일자",
+      "page": 1,
+      "group": "header",
+      "field_type": "date",
+      "required": false,
+      "bbox_norm": [
+        0.1072,
+        0.1056,
+        0.1072,
+        0.0185
+      ]
+    },
+    {
+      "key": "farm_business_no",
+      "label": "농업경영체등록번호",
+      "page": 1,
+      "group": "header",
+      "field_type": "number_text",
+      "required": false,
+      "bbox_norm": [
+        0.2145,
+        0.1056,
+        0.1221,
+        0.0185
+      ]
+    },
+    {
+      "key": "farmer_no_top",
+      "label": "농업인번호",
+      "page": 1,
+      "group": "header",
+      "field_type": "number_text",
+      "required": false,
+      "bbox_norm": [
+        0.3366,
+        0.1056,
+        0.1027,
+        0.0185
+      ]
+    },
+    {
+      "key": "business_info_change_date",
+      "label": "경영정보변경일",
+      "page": 1,
+      "group": "header",
+      "field_type": "date",
+      "required": false,
+      "bbox_norm": [
+        0.4392,
+        0.1056,
+        0.1426,
+        0.0185
+      ]
+    },
+    {
+      "key": "applicant_name",
+      "label": "등록신청인 성명",
+      "page": 1,
+      "group": "applicant",
+      "field_type": "korean_name",
+      "required": true,
+      "bbox_norm": [
+        0.1027,
+        0.1702,
+        0.097,
+        0.0315
+      ]
+    },
+    {
+      "key": "applicant_rrn",
+      "label": "등록신청인 주민등록번호",
+      "page": 1,
+      "group": "applicant",
+      "field_type": "resident_number",
+      "required": true,
+      "bbox_norm": [
+        0.1997,
+        0.1702,
+        0.1597,
+        0.0315
+      ]
+    },
+    {
+      "key": "applicant_account",
+      "label": "계좌번호 은행명",
+      "page": 1,
+      "group": "applicant",
+      "field_type": "account",
+      "required": false,
+      "bbox_norm": [
+        0.3594,
+        0.1702,
+        0.1654,
+        0.0315
+      ]
+    },
+    {
+      "key": "applicant_address",
+      "label": "등록신청인 주소",
+      "page": 1,
+      "group": "applicant",
+      "field_type": "address",
+      "required": true,
+      "bbox_norm": [
+        0.1027,
+        0.204,
+        0.5419,
+        0.025
+      ]
+    },
+    {
+      "key": "applicant_phone",
+      "label": "등록신청인 전화번호",
+      "page": 1,
+      "group": "applicant",
+      "field_type": "phone",
+      "required": false,
+      "bbox_norm": [
+        0.6446,
+        0.204,
+        0.1711,
+        0.025
+      ]
+    },
+    {
+      "key": "manager_name",
+      "label": "경영주 성명",
+      "page": 1,
+      "group": "manager",
+      "field_type": "korean_name",
+      "required": false,
+      "bbox_norm": [
+        0.1027,
+        0.2315,
+        0.1255,
+        0.0347
+      ]
+    },
+    {
+      "key": "manager_farmer_no",
+      "label": "경영주 농업인번호",
+      "page": 1,
+      "group": "manager",
+      "field_type": "number_text",
+      "required": false,
+      "bbox_norm": [
+        0.2282,
+        0.2315,
+        0.2111,
+        0.0347
+      ]
+    },
+    {
+      "key": "manager_application_type",
+      "label": "경영주 신청유형",
+      "page": 1,
+      "group": "manager",
+      "field_type": "text",
+      "required": false,
+      "bbox_norm": [
+        0.4392,
+        0.2315,
+        0.1426,
+        0.0347
+      ]
+    },
+    {
+      "key": "livestock_farm_checked",
+      "label": "축산농가 체크",
+      "page": 1,
+      "group": "manager",
+      "field_type": "checkbox",
+      "required": false,
+      "bbox_norm": [
+        0.7416,
+        0.2315,
+        0.0742,
+        0.0347
+      ]
+    },
+    {
+      "key": "facility_farm_checked",
+      "label": "시설농가 체크",
+      "page": 1,
+      "group": "manager",
+      "field_type": "checkbox",
+      "required": false,
+      "bbox_norm": [
+        0.8157,
+        0.2315,
+        0.0742,
+        0.0347
+      ]
+    },
+    {
+      "key": "manager_address",
+      "label": "경영주 주소지",
+      "page": 1,
+      "group": "manager",
+      "field_type": "address",
+      "required": false,
+      "bbox_norm": [
+        0.1027,
+        0.2677,
+        0.2339,
+        0.0347
+      ]
+    },
+    {
+      "key": "manager_village",
+      "label": "경영주 마을명",
+      "page": 1,
+      "group": "manager",
+      "field_type": "text",
+      "required": false,
+      "bbox_norm": [
+        0.3366,
+        0.2677,
+        0.1027,
+        0.0347
+      ]
+    },
+    {
+      "key": "manager_phone",
+      "label": "경영주 전화번호",
+      "page": 1,
+      "group": "manager",
+      "field_type": "phone",
+      "required": false,
+      "bbox_norm": [
+        0.4392,
+        0.2677,
+        0.1426,
+        0.0347
+      ]
+    },
+    {
+      "key": "other_farmer_name",
+      "label": "경영주외 성명",
+      "page": 1,
+      "group": "other_farmer",
+      "field_type": "korean_name",
+      "required": false,
+      "bbox_norm": [
+        0.1027,
+        0.304,
+        0.1255,
+        0.0315
+      ]
+    },
+    {
+      "key": "other_farmer_birth",
+      "label": "경영주외 생년월일",
+      "page": 1,
+      "group": "other_farmer",
+      "field_type": "date_or_birth",
+      "required": false,
+      "bbox_norm": [
+        0.2282,
+        0.304,
+        0.1084,
+        0.0315
+      ]
+    },
+    {
+      "key": "other_farmer_no",
+      "label": "경영주외 농업인번호",
+      "page": 1,
+      "group": "other_farmer",
+      "field_type": "number_text",
+      "required": false,
+      "bbox_norm": [
+        0.3366,
+        0.304,
+        0.1027,
+        0.0315
+      ]
+    },
+    {
+      "key": "other_farmer_relation",
+      "label": "경영주와의 관계",
+      "page": 1,
+      "group": "other_farmer",
+      "field_type": "relation",
+      "required": false,
+      "bbox_norm": [
+        0.5819,
+        0.304,
+        0.1597,
+        0.0702
+      ]
+    },
+    {
+      "key": "family_1_left_relation",
+      "label": "가족1좌 관계",
+      "page": 1,
+      "group": "family",
+      "field_type": "relation",
+      "required": false,
+      "bbox_norm": [
+        0.0245,
+        0.5218,
+        0.1027,
+        0.0234
+      ]
+    },
+    {
+      "key": "family_1_left_name",
+      "label": "가족1좌 성명",
+      "page": 1,
+      "group": "family",
+      "field_type": "korean_name",
+      "required": false,
+      "bbox_norm": [
+        0.1272,
+        0.5218,
+        0.1403,
+        0.0234
+      ]
+    },
+    {
+      "key": "family_1_left_rrn",
+      "label": "가족1좌 주민번호",
+      "page": 1,
+      "group": "family",
+      "field_type": "resident_number",
+      "required": false,
+      "bbox_norm": [
+        0.2675,
+        0.5218,
+        0.1671,
+        0.0234
+      ]
+    },
+    {
+      "key": "family_1_right_relation",
+      "label": "가족1우 관계",
+      "page": 1,
+      "group": "family",
+      "field_type": "relation",
+      "required": false,
+      "bbox_norm": [
+        0.4347,
+        0.5218,
+        0.0827,
+        0.0234
+      ]
+    },
+    {
+      "key": "family_1_right_name",
+      "label": "가족1우 성명",
+      "page": 1,
+      "group": "family",
+      "field_type": "korean_name",
+      "required": false,
+      "bbox_norm": [
+        0.5174,
+        0.5218,
+        0.1335,
+        0.0234
+      ]
+    },
+    {
+      "key": "family_1_right_rrn",
+      "label": "가족1우 주민번호",
+      "page": 1,
+      "group": "family",
+      "field_type": "resident_number",
+      "required": false,
+      "bbox_norm": [
+        0.6509,
+        0.5218,
+        0.1649,
+        0.0234
+      ]
+    },
+    {
+      "key": "family_2_left_relation",
+      "label": "가족2좌 관계",
+      "page": 1,
+      "group": "family",
+      "field_type": "relation",
+      "required": false,
+      "bbox_norm": [
+        0.0245,
+        0.546,
+        0.1027,
+        0.0242
+      ]
+    },
+    {
+      "key": "family_2_left_name",
+      "label": "가족2좌 성명",
+      "page": 1,
+      "group": "family",
+      "field_type": "korean_name",
+      "required": false,
+      "bbox_norm": [
+        0.1272,
+        0.546,
+        0.1403,
+        0.0242
+      ]
+    },
+    {
+      "key": "family_2_left_rrn",
+      "label": "가족2좌 주민번호",
+      "page": 1,
+      "group": "family",
+      "field_type": "resident_number",
+      "required": false,
+      "bbox_norm": [
+        0.2675,
+        0.546,
+        0.1671,
+        0.0242
+      ]
+    },
+    {
+      "key": "family_2_right_relation",
+      "label": "가족2우 관계",
+      "page": 1,
+      "group": "family",
+      "field_type": "relation",
+      "required": false,
+      "bbox_norm": [
+        0.4347,
+        0.546,
+        0.0827,
+        0.0242
+      ]
+    },
+    {
+      "key": "family_2_right_name",
+      "label": "가족2우 성명",
+      "page": 1,
+      "group": "family",
+      "field_type": "korean_name",
+      "required": false,
+      "bbox_norm": [
+        0.5174,
+        0.546,
+        0.1335,
+        0.0242
+      ]
+    },
+    {
+      "key": "family_2_right_rrn",
+      "label": "가족2우 주민번호",
+      "page": 1,
+      "group": "family",
+      "field_type": "resident_number",
+      "required": false,
+      "bbox_norm": [
+        0.6509,
+        0.546,
+        0.1649,
+        0.0242
+      ]
+    },
+    {
+      "key": "family_3_left_relation",
+      "label": "가족3좌 관계",
+      "page": 1,
+      "group": "family",
+      "field_type": "relation",
+      "required": false,
+      "bbox_norm": [
+        0.0245,
+        0.571,
+        0.1027,
+        0.0242
+      ]
+    },
+    {
+      "key": "family_3_left_name",
+      "label": "가족3좌 성명",
+      "page": 1,
+      "group": "family",
+      "field_type": "korean_name",
+      "required": false,
+      "bbox_norm": [
+        0.1272,
+        0.571,
+        0.1403,
+        0.0242
+      ]
+    },
+    {
+      "key": "family_3_left_rrn",
+      "label": "가족3좌 주민번호",
+      "page": 1,
+      "group": "family",
+      "field_type": "resident_number",
+      "required": false,
+      "bbox_norm": [
+        0.2675,
+        0.571,
+        0.1671,
+        0.0242
+      ]
+    },
+    {
+      "key": "family_3_right_relation",
+      "label": "가족3우 관계",
+      "page": 1,
+      "group": "family",
+      "field_type": "relation",
+      "required": false,
+      "bbox_norm": [
+        0.4347,
+        0.571,
+        0.0827,
+        0.0242
+      ]
+    },
+    {
+      "key": "family_3_right_name",
+      "label": "가족3우 성명",
+      "page": 1,
+      "group": "family",
+      "field_type": "korean_name",
+      "required": false,
+      "bbox_norm": [
+        0.5174,
+        0.571,
+        0.1335,
+        0.0242
+      ]
+    },
+    {
+      "key": "family_3_right_rrn",
+      "label": "가족3우 주민번호",
+      "page": 1,
+      "group": "family",
+      "field_type": "resident_number",
+      "required": false,
+      "bbox_norm": [
+        0.6509,
+        0.571,
+        0.1649,
+        0.0242
+      ]
+    },
+    {
+      "key": "family_4_left_relation",
+      "label": "가족4좌 관계",
+      "page": 1,
+      "group": "family",
+      "field_type": "relation",
+      "required": false,
+      "bbox_norm": [
+        0.0245,
+        0.596,
+        0.1027,
+        0.0242
+      ]
+    },
+    {
+      "key": "family_4_left_name",
+      "label": "가족4좌 성명",
+      "page": 1,
+      "group": "family",
+      "field_type": "korean_name",
+      "required": false,
+      "bbox_norm": [
+        0.1272,
+        0.596,
+        0.1403,
+        0.0242
+      ]
+    },
+    {
+      "key": "family_4_left_rrn",
+      "label": "가족4좌 주민번호",
+      "page": 1,
+      "group": "family",
+      "field_type": "resident_number",
+      "required": false,
+      "bbox_norm": [
+        0.2675,
+        0.596,
+        0.1671,
+        0.0242
+      ]
+    },
+    {
+      "key": "family_4_right_relation",
+      "label": "가족4우 관계",
+      "page": 1,
+      "group": "family",
+      "field_type": "relation",
+      "required": false,
+      "bbox_norm": [
+        0.4347,
+        0.596,
+        0.0827,
+        0.0242
+      ]
+    },
+    {
+      "key": "family_4_right_name",
+      "label": "가족4우 성명",
+      "page": 1,
+      "group": "family",
+      "field_type": "korean_name",
+      "required": false,
+      "bbox_norm": [
+        0.5174,
+        0.596,
+        0.1335,
+        0.0242
+      ]
+    },
+    {
+      "key": "family_4_right_rrn",
+      "label": "가족4우 주민번호",
+      "page": 1,
+      "group": "family",
+      "field_type": "resident_number",
+      "required": false,
+      "bbox_norm": [
+        0.6509,
+        0.596,
+        0.1649,
+        0.0242
+      ]
+    },
+    {
+      "key": "family_separated_1_relation",
+      "label": "별거1 관계",
+      "page": 1,
+      "group": "family_separated",
+      "field_type": "relation",
+      "required": false,
+      "bbox_norm": [
+        0.0245,
+        0.6726,
+        0.1027,
+        0.0234
+      ]
+    },
+    {
+      "key": "family_separated_1_name",
+      "label": "별거1 성명",
+      "page": 1,
+      "group": "family_separated",
+      "field_type": "korean_name",
+      "required": false,
+      "bbox_norm": [
+        0.1272,
+        0.6726,
+        0.1403,
+        0.0234
+      ]
+    },
+    {
+      "key": "family_separated_1_rrn",
+      "label": "별거1 주민번호",
+      "page": 1,
+      "group": "family_separated",
+      "field_type": "resident_number",
+      "required": false,
+      "bbox_norm": [
+        0.2675,
+        0.6726,
+        0.1671,
+        0.0234
+      ]
+    },
+    {
+      "key": "family_separated_2_relation",
+      "label": "별거2 관계",
+      "page": 1,
+      "group": "family_separated",
+      "field_type": "relation",
+      "required": false,
+      "bbox_norm": [
+        0.4347,
+        0.6726,
+        0.0827,
+        0.0234
+      ]
+    },
+    {
+      "key": "family_separated_2_name",
+      "label": "별거2 성명",
+      "page": 1,
+      "group": "family_separated",
+      "field_type": "korean_name",
+      "required": false,
+      "bbox_norm": [
+        0.5174,
+        0.6726,
+        0.1335,
+        0.0234
+      ]
+    },
+    {
+      "key": "family_separated_2_rrn",
+      "label": "별거2 주민번호",
+      "page": 1,
+      "group": "family_separated",
+      "field_type": "resident_number",
+      "required": false,
+      "bbox_norm": [
+        0.6509,
+        0.6726,
+        0.1649,
+        0.0234
+      ]
+    },
+    {
+      "key": "family_info_confirm_checked",
+      "label": "확인 체크",
+      "page": 1,
+      "group": "confirm",
+      "field_type": "checkbox",
+      "required": false,
+      "bbox_norm": [
+        0.0245,
+        0.8387,
+        0.0114,
+        0.0145
+      ]
+    }
   ],
   "groups": {
-    "header": {"label": "일반현황", "color": "#71717a"},
-    "applicant": {"label": "등록신청인", "color": "#ef4444"},
-    "manager": {"label": "경영주인 농업인", "color": "#3b82f6"},
-    "other_farmer": {"label": "경영주 외 농업인", "color": "#a855f7"},
-    "family": {"label": "가족관계 (동거)", "color": "#22c55e"},
-    "family_separated": {"label": "가족관계 (별거)", "color": "#14b8a6"},
-    "confirm": {"label": "확인", "color": "#f59e0b"}
+    "header": {
+      "label": "일반현황",
+      "color": "#71717a"
+    },
+    "applicant": {
+      "label": "등록신청인",
+      "color": "#ef4444"
+    },
+    "manager": {
+      "label": "경영주인 농업인",
+      "color": "#3b82f6"
+    },
+    "other_farmer": {
+      "label": "경영주 외 농업인",
+      "color": "#a855f7"
+    },
+    "family": {
+      "label": "가족관계 (동거)",
+      "color": "#22c55e"
+    },
+    "family_separated": {
+      "label": "가족관계 (별거)",
+      "color": "#14b8a6"
+    },
+    "confirm": {
+      "label": "확인",
+      "color": "#f59e0b"
+    }
   },
   "dependency_rules": {
     "family_set": {
       "type": "linked_set",
-      "description": "가족관계 행: 관계+성명+주민번호는 세트로 입력",
       "groups": [
-        ["family_1_left_relation", "family_1_left_name", "family_1_left_rrn"],
-        ["family_1_right_relation", "family_1_right_name", "family_1_right_rrn"],
-        ["family_2_left_relation", "family_2_left_name", "family_2_left_rrn"],
-        ["family_2_right_relation", "family_2_right_name", "family_2_right_rrn"],
-        ["family_3_left_relation", "family_3_left_name", "family_3_left_rrn"],
-        ["family_3_right_relation", "family_3_right_name", "family_3_right_rrn"],
-        ["family_4_left_relation", "family_4_left_name", "family_4_left_rrn"],
-        ["family_4_right_relation", "family_4_right_name", "family_4_right_rrn"]
+        [
+          "family_1_left_relation",
+          "family_1_left_name",
+          "family_1_left_rrn"
+        ],
+        [
+          "family_1_right_relation",
+          "family_1_right_name",
+          "family_1_right_rrn"
+        ],
+        [
+          "family_2_left_relation",
+          "family_2_left_name",
+          "family_2_left_rrn"
+        ],
+        [
+          "family_2_right_relation",
+          "family_2_right_name",
+          "family_2_right_rrn"
+        ],
+        [
+          "family_3_left_relation",
+          "family_3_left_name",
+          "family_3_left_rrn"
+        ],
+        [
+          "family_3_right_relation",
+          "family_3_right_name",
+          "family_3_right_rrn"
+        ],
+        [
+          "family_4_left_relation",
+          "family_4_left_name",
+          "family_4_left_rrn"
+        ],
+        [
+          "family_4_right_relation",
+          "family_4_right_name",
+          "family_4_right_rrn"
+        ]
       ]
     },
     "applicant": {
       "type": "mixed",
-      "description": "등록신청인: 이름/주민번호/주소 필수, 계좌/전화 선택",
-      "required": ["applicant_name", "applicant_rrn", "applicant_address"],
-      "optional": ["applicant_account", "applicant_phone"]
+      "required": [
+        "applicant_name",
+        "applicant_rrn",
+        "applicant_address"
+      ],
+      "optional": [
+        "applicant_account",
+        "applicant_phone"
+      ]
     },
     "manager": {
       "type": "all_optional",
-      "description": "경영주 정보: 전부 선택",
-      "fields": ["manager_name", "manager_rrn", "manager_address", "manager_village", "manager_phone", "manager_application_type", "livestock_farm_checked", "facility_farm_checked"]
+      "fields": [
+        "manager_name",
+        "manager_farmer_no",
+        "manager_address",
+        "manager_village",
+        "manager_phone",
+        "manager_application_type",
+        "livestock_farm_checked",
+        "facility_farm_checked"
+      ]
     },
     "other_farmer": {
       "type": "conditional",
-      "description": "경영주 외: 이름 있으면 생년월일도 필요",
       "trigger": "other_farmer_name",
-      "then_required": ["other_farmer_birth"],
-      "always_optional": ["other_farmer_no", "other_farmer_relation"]
+      "then_required": [
+        "other_farmer_birth"
+      ],
+      "always_optional": [
+        "other_farmer_no",
+        "other_farmer_relation"
+      ]
     }
   }
 }
