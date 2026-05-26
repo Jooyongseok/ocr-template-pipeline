@@ -71,6 +71,43 @@ def create_app(work_dir: str = "work", output_dir: str = "output") -> Flask:
         _editor_page_cache["current"] = img_bytes
         return jsonify(image=f"data:image/png;base64,{b64}", total_pages=total_pages, filename=filename)
 
+    @app.route("/editor/load-pdf-from-input", methods=["POST"])
+    def editor_load_pdf_from_input():
+        """input/ 폴더에 있는 PDF를 편집기에 로드한다."""
+        import fitz
+        data = request.get_json(force=True, silent=True)
+        filename = data.get("filename", "") if data else ""
+        input_dir = os.path.join(os.path.dirname(work_dir), "input")
+        if not filename:
+            # 첫 번째 PDF 자동 선택
+            import glob
+            pdfs = sorted(glob.glob(os.path.join(input_dir, "*.pdf")))
+            if not pdfs:
+                return jsonify({"error": "input/ 폴더에 PDF가 없습니다"}), 400
+            filename = os.path.basename(pdfs[0])
+
+        pdf_path = os.path.join(input_dir, filename)
+        if not os.path.isfile(pdf_path):
+            return jsonify({"error": f"파일을 찾을 수 없습니다: {filename}"}), 404
+
+        page_num = int(data.get("page", 1)) - 1 if data else 0
+        doc = fitz.open(pdf_path)
+        if page_num >= len(doc):
+            doc.close()
+            return jsonify({"error": f"페이지 {page_num+1}이 없습니다"}), 400
+        page = doc[page_num]
+        pix = page.get_pixmap(dpi=150)
+        img_bytes = pix.tobytes("png")
+        total_pages = len(doc)
+        doc.close()
+
+        b64 = base64.b64encode(img_bytes).decode()
+        return jsonify({
+            "image": f"data:image/png;base64,{b64}",
+            "total_pages": total_pages,
+            "filename": filename,
+        })
+
     @app.route("/editor/presets")
     def editor_presets():
         FIELD_TYPES = ["text","korean_name","number_text","date","date_or_birth","phone","resident_number","account","address","relation","checkbox","signature"]

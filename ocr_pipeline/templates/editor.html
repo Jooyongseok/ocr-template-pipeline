@@ -665,19 +665,39 @@ async function loadTemplate(filename) {
   const tpl = params.get('template');
   if (tpl) {
     await loadTemplate(tpl);
-    // 해당 템플릿의 PDF가 있으면 페이지 이미지도 로드
-    const pageRes = await fetch(`/api/page-image/${tpl.replace('.json','').replace(/_/g,'-')}/1`).catch(()=>null);
-    if (!pageRes || !pageRes.ok) {
-      // input/ 폴더의 첫 PDF로 시도
-      const pdfsRes = await fetch('/api/input-pdfs').then(r=>r.json()).catch(()=>({pdfs:[]}));
-      if (pdfsRes.pdfs && pdfsRes.pdfs.length > 0) {
-        document.getElementById('uploadGuide').innerHTML =
-          '<div style="text-align:center">' +
-          '<p>템플릿이 로드되었습니다. (' + fields.length + '개 필드)</p>' +
-          '<p style="color:#818cf8;margin-top:8px">바운딩 박스를 보려면 위에서 PDF를 업로드하세요</p>' +
-          '<p style="font-size:12px;color:#71717a;margin-top:4px">input/ 폴더: ' + pdfsRes.pdfs.map(p=>p.filename).join(', ') + '</p>' +
-          '</div>';
+
+    // input/ 폴더에서 첫 PDF를 자동으로 로드하여 배경 이미지로 표시
+    try {
+      const pdfData = await fetch('/editor/load-pdf-from-input', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({filename: '', page: 1})
+      }).then(r => r.json());
+
+      if (pdfData.image) {
+        const img = document.getElementById('docImage');
+        img.onload = function() {
+          const canvas = document.getElementById('overlay');
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          imgW = img.naturalWidth;
+          imgH = img.naturalHeight;
+          document.getElementById('canvasWrap').style.display = 'inline-block';
+          document.getElementById('uploadGuide').style.display = 'none';
+          redraw();
+        };
+        img.src = pdfData.image;
+        document.getElementById('statusInfo').textContent =
+          '필드: ' + fields.length + '개 | PDF: ' + pdfData.filename;
       }
+    } catch(e) {
+      // PDF 로드 실패시 안내만 표시
+      const pdfsRes = await fetch('/api/input-pdfs').then(r=>r.json()).catch(()=>({pdfs:[]}));
+      document.getElementById('uploadGuide').innerHTML =
+        '<div style="text-align:center">' +
+        '<p>템플릿 로드 완료 (' + fields.length + '개 필드)</p>' +
+        '<p style="color:#818cf8;margin-top:8px">바운딩 박스를 보려면 위에서 PDF를 업로드하세요</p>' +
+        '</div>';
     }
   }
 })();
