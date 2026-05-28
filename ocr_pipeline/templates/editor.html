@@ -604,7 +604,9 @@ function exportJSON() {
   const a = document.createElement('a');
   a.href = url;
   a.download = (template.template_id || 'template') + '.json';
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
 

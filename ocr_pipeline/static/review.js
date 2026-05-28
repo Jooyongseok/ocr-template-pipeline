@@ -497,16 +497,31 @@ function setupEventListeners() {
 
   $('#btn-export').addEventListener('click', async () => {
     showToast('엑셀 생성 중...', 'info');
-    const result = await API.exportExcel();
-    if (result.ok) {
+    try {
+      const result = await API.exportExcel();
+      if (!result.ok) {
+        showToast('엑셀 생성 실패: ' + (result.error || ''), 'error');
+        return;
+      }
       showToast('엑셀 다운로드 중...', 'success');
-      // 생성된 엑셀 파일을 브라우저로 다운로드
+      const resp = await fetch('/api/download-excel');
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        showToast('다운로드 실패: ' + (err.error || resp.statusText), 'error');
+        return;
+      }
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = '/api/download-excel';
+      a.href = url;
       a.download = 'result_reviewed.xlsx';
+      document.body.appendChild(a);
       a.click();
-    } else {
-      showToast('엑셀 생성 실패: ' + (result.error || ''), 'error');
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('엑셀 다운로드 완료', 'success');
+    } catch (e) {
+      showToast('엑셀 내보내기 오류: ' + e.message, 'error');
     }
   });
 
@@ -531,13 +546,14 @@ function setupEventListeners() {
     showToast('교정 데이터 내보내기 중...', 'info');
     const result = await API.exportCorrections();
     if (result.corrections && result.corrections.length > 0) {
-      // Save to localStorage for cross-machine transfer
       const blob = new Blob([JSON.stringify(result, null, 2)], {type: 'application/json'});
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `corrections_${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
       URL.revokeObjectURL(url);
       showToast(`${result.total}건 교정 데이터 다운로드 완료`, 'success');
     } else {
