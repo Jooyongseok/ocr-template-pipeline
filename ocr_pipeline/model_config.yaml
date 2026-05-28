@@ -1,24 +1,18 @@
-# OCR 모델 설정 파일
-# 모델을 교체하려면 default_model 값만 변경하면 됩니다.
-
+default_model: ko_trocr
 models:
   fine_tuned_trocr:
+    batch_size: 32
+    description: "Fine-tuned TrOCR-small (\uAE00\uC790 \uB2E8\uC704, \uC74C\uC808 \uC778\uC2DD\uC6A9)"
+    device: cuda:0
     engine: trocr
-    model_path: ../handwriting_ocr/checkpoints/best/
     max_new_tokens: 32
+    model_path: ../handwriting_ocr/checkpoints/best/
     num_beams: 4
-    device: cuda:0
-    batch_size: 32
-    description: "Fine-tuned TrOCR-small (CER 2.6%, 54M params)"
-
   ko_trocr:
-    engine: trocr
-    model_name: ddobokki/ko-trocr
-    max_new_tokens: 64
-    num_beams: 4
-    device: cuda:0
     batch_size: 32
-    description: "General Korean TrOCR (213M params)"
-
-# 사용할 모델 ID -- 위 models 중 하나를 지정
-default_model: fine_tuned_trocr
+    description: General Korean TrOCR (213M params)
+    device: cuda:0
+    engine: trocr
+    max_new_tokens: 64
+    model_name: ddobokki/ko-trocr
+    num_beams: 4

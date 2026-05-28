@@ -165,7 +165,7 @@ fetch('/editor/presets').then(r => r.json()).then(data => {
   fieldTypes = data.field_types;
   groups = data.groups;
   groupColors = data.group_colors;
-  excelSheetMap = data.excel_sheet_map;
+  excelSheetMap = data.excel_sheet_map || {};
 });
 
 // ---- 파일 업로드 ----
@@ -686,10 +686,19 @@ async function loadTemplate(filename) {
         const img = document.getElementById('docImage');
         img.onload = function() {
           const canvas = document.getElementById('overlay');
-          canvas.width = img.naturalWidth;
-          canvas.height = img.naturalHeight;
-          imgW = img.naturalWidth;
-          imgH = img.naturalHeight;
+          // 화면에 맞게 스케일
+          const maxW = document.getElementById('canvasArea').clientWidth - 30;
+          const scale = Math.min(1, maxW / img.naturalWidth);
+          const dispW = Math.floor(img.naturalWidth * scale);
+          const dispH = Math.floor(img.naturalHeight * scale);
+          img.style.width = dispW + 'px';
+          img.style.height = dispH + 'px';
+          canvas.width = dispW;
+          canvas.height = dispH;
+          origW = img.naturalWidth;
+          origH = img.naturalHeight;
+          imgW = dispW;
+          imgH = dispH;
           document.getElementById('canvasWrap').style.display = 'inline-block';
           document.getElementById('uploadGuide').style.display = 'none';
           redraw();

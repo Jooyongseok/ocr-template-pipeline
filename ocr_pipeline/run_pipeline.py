@@ -8,12 +8,12 @@ from pathlib import Path
 
 from tqdm import tqdm
 
-from crop_generator import generate_all_crops
-from model_registry import ModelRegistry
-from validator import validate_result
-from excel_writer import write_excel
-from data_store import DataStore
-from field_dependency import check_dependencies
+from .crop_generator import generate_all_crops
+from .model_registry import ModelRegistry
+from .validator import validate_result
+from .excel_writer import write_excel
+from .data_store import DataStore
+from .field_dependency import check_dependencies
 
 
 def merge_results(batch_results: list[dict], ocr_results: list[dict]) -> list[dict]:

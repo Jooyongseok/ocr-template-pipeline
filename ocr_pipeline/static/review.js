@@ -499,7 +499,12 @@ function setupEventListeners() {
     showToast('엑셀 생성 중...', 'info');
     const result = await API.exportExcel();
     if (result.ok) {
-      showToast('엑셀 생성 완료: ' + result.path, 'success');
+      showToast('엑셀 다운로드 중...', 'success');
+      // 생성된 엑셀 파일을 브라우저로 다운로드
+      const a = document.createElement('a');
+      a.href = '/api/download-excel';
+      a.download = 'result_reviewed.xlsx';
+      a.click();
     } else {
       showToast('엑셀 생성 실패: ' + (result.error || ''), 'error');
     }

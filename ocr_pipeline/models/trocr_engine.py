@@ -51,6 +51,14 @@ class TrOCREngine(BaseOCREngine):
             self.device = "cpu"
             self.model.to("cpu")
         self.model.eval()
+        # generation_config 오버라이드 (체크포인트에 저장된 값이 너무 작을 수 있음)
+        if hasattr(self.model, "generation_config"):
+            gc = self.model.generation_config
+            gc.max_new_tokens = self.max_new_tokens
+            gc.num_beams = self.num_beams
+            # max_length와 max_new_tokens 충돌 방지
+            if hasattr(gc, "max_length"):
+                gc.max_length = None
         print("  모델 로드 완료")
 
     @torch.no_grad()

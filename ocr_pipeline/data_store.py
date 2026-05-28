@@ -14,7 +14,7 @@ from . import field_dependency
 
 
 # 보안: document_id 화이트리스트 패턴
-SAFE_DOC_ID = re.compile(r"^[a-zA-Z0-9_\-]+$")
+SAFE_DOC_ID = re.compile(r"^[a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣㆍ _\-\(\)\[\]]+$")
 
 
 def _validate_doc_id(doc_id: str) -> str:

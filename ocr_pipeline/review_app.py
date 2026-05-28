@@ -15,7 +15,7 @@ from .excel_writer import write_excel
 from .model_registry import load_config as load_model_config
 import io
 
-SAFE_DOC_ID = re.compile(r"^[a-zA-Z0-9_\-]+$")
+SAFE_DOC_ID = re.compile(r"^[a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣㆍ _\-\(\)\[\]]+$")
 
 
 def create_app(work_dir: str = "work", output_dir: str = "output") -> Flask:
@@ -614,6 +614,19 @@ def create_app(work_dir: str = "work", output_dir: str = "output") -> Flask:
         write_excel(docs, output_path, mask_pii=True)
         return jsonify({"ok": True, "path": output_path})
 
+    @app.route("/api/download-excel")
+    def api_download_excel():
+        """생성된 엑셀 파일을 브라우저로 다운로드한다."""
+        output_path = os.path.join(output_dir, "result_reviewed.xlsx")
+        if not os.path.isfile(output_path):
+            return jsonify({"error": "엑셀 파일이 없습니다. 먼저 내보내기를 실행하세요."}), 404
+        return send_file(
+            os.path.abspath(output_path),
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            as_attachment=True,
+            download_name="result_reviewed.xlsx",
+        )
+
     # ── API: Active Learning 통계 ──
 
     @app.route("/api/learning-stats")
@@ -635,6 +648,25 @@ def create_app(work_dir: str = "work", output_dir: str = "output") -> Flask:
         if not path:
             return jsonify({"error": "수집된 데이터 없음"}), 400
         return jsonify({"ok": True, "path": path, "stats": collector.get_stats()})
+
+    @app.route("/api/download-training-data")
+    def api_download_training():
+        """학습 데이터를 브라우저로 다운로드한다."""
+        training_dir = os.path.join(work_dir, "training_export")
+        if not os.path.isdir(training_dir):
+            return jsonify({"error": "학습 데이터가 없습니다. 먼저 내보내기를 실행하세요."}), 404
+        # 가장 최근 파일
+        import glob as _glob
+        files = sorted(_glob.glob(os.path.join(training_dir, "*.jsonl")))
+        if not files:
+            return jsonify({"error": "학습 데이터 파일이 없습니다."}), 404
+        latest = files[-1]
+        return send_file(
+            os.path.abspath(latest),
+            mimetype="application/jsonl",
+            as_attachment=True,
+            download_name=os.path.basename(latest),
+        )
 
     # ── API: 모델 목록 ──
 
