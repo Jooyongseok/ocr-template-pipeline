@@ -29,6 +29,7 @@ const API = {
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({corrections}),
   }).then(r => r.json()),
+  deleteDoc: (docId) => fetch(`/api/document/${docId}`, {method: 'DELETE'}).then(r => r.json()),
 };
 
 // ── State ──
@@ -495,6 +496,25 @@ function setupEventListeners() {
     }
   });
 
+  // 문서 삭제
+  $('#btn-delete-doc').addEventListener('click', async () => {
+    if (!state.currentDocId) return;
+    if (!confirm(`문서 "${state.currentDocId}"를 삭제하시겠습니까?\n삭제된 문서는 복구할 수 없습니다.`)) return;
+    try {
+      const result = await API.deleteDoc(state.currentDocId);
+      if (result.ok) {
+        showToast('문서 삭제 완료', 'success');
+        await loadDocuments();
+        updateStats();
+      } else {
+        showToast('삭제 실패: ' + (result.error || ''), 'error');
+      }
+    } catch (e) {
+      showToast('삭제 실패: ' + e.message, 'error');
+    }
+  });
+
+  // 엑셀 내보내기 (템플릿별)
   $('#btn-export').addEventListener('click', async () => {
     showToast('엑셀 생성 중...', 'info');
     try {
@@ -503,22 +523,22 @@ function setupEventListeners() {
         showToast('엑셀 생성 실패: ' + (result.error || ''), 'error');
         return;
       }
-      showToast('엑셀 다운로드 중...', 'success');
-      const resp = await fetch('/api/download-excel');
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({}));
-        showToast('다운로드 실패: ' + (err.error || resp.statusText), 'error');
-        return;
+      const files = result.files || [];
+      showToast(`${files.length}개 템플릿 엑셀 생성 완료`, 'success');
+      // 각 템플릿별 파일 다운로드
+      for (const f of files) {
+        const resp = await fetch(`/api/download-excel?filename=${encodeURIComponent(f.filename)}`);
+        if (!resp.ok) continue;
+        const blob = await resp.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = f.filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
       }
-      const blob = await resp.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'result_reviewed.xlsx';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
       showToast('엑셀 다운로드 완료', 'success');
     } catch (e) {
       showToast('엑셀 내보내기 오류: ' + e.message, 'error');

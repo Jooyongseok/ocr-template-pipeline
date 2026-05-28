@@ -584,6 +584,17 @@ def create_app(work_dir: str = "work", output_dir: str = "output") -> Flask:
 
         return jsonify({"ok": True, "document_status": "skipped"})
 
+    # ── API: 문서 삭제 ──
+
+    @app.route("/api/document/<doc_id>", methods=["DELETE"])
+    def api_delete_document(doc_id):
+        if not SAFE_DOC_ID.match(doc_id):
+            return jsonify({"error": "문서 ID가 올바르지 않습니다"}), 400
+        deleted = store.delete_document(doc_id)
+        if not deleted:
+            return jsonify({"error": "문서를 찾을 수 없습니다"}), 404
+        return jsonify({"ok": True, "deleted_id": doc_id})
+
     # ── API: 통계 ──
 
     @app.route("/api/stats")
@@ -595,12 +606,11 @@ def create_app(work_dir: str = "work", output_dir: str = "output") -> Flask:
             "active_learning": al_stats,
         })
 
-    # ── API: 엑셀 내보내기 ──
+    # ── API: 엑셀 내보내기 (템플릿별) ──
 
     @app.route("/api/export-excel", methods=["POST"])
     def api_export_excel():
         os.makedirs(output_dir, exist_ok=True)
-        output_path = os.path.join(output_dir, "result_reviewed.xlsx")
 
         docs = []
         for did in store.list_documents():
@@ -611,20 +621,65 @@ def create_app(work_dir: str = "work", output_dir: str = "output") -> Flask:
         if not docs:
             return jsonify({"error": "내보낼 문서 없음"}), 400
 
-        write_excel(docs, output_path, mask_pii=True)
-        return jsonify({"ok": True, "path": output_path})
+        # 템플릿별 그룹화
+        by_template = {}
+        for doc in docs:
+            tid = doc.get("template_id", "unknown") or "unknown"
+            by_template.setdefault(tid, []).append(doc)
+
+        files = []
+        for tid, tdocs in by_template.items():
+            safe_name = re.sub(r'[^\w\-]', '_', tid.replace('.json', ''))
+            fname = f"result_{safe_name}.xlsx"
+            out_path = os.path.join(output_dir, fname)
+            write_excel(tdocs, out_path, mask_pii=True)
+            files.append({
+                "template_id": tid,
+                "filename": fname,
+                "doc_count": len(tdocs),
+            })
+
+        return jsonify({"ok": True, "files": files})
 
     @app.route("/api/download-excel")
     def api_download_excel():
-        """생성된 엑셀 파일을 브라우저로 다운로드한다."""
-        output_path = os.path.join(output_dir, "result_reviewed.xlsx")
-        if not os.path.isfile(output_path):
-            return jsonify({"error": "엑셀 파일이 없습니다. 먼저 내보내기를 실행하세요."}), 404
+        """엑셀 파일을 브라우저로 다운로드한다. ?filename= 으로 특정 파일 지정."""
+        filename = request.args.get("filename", "")
+        if filename:
+            # 특정 템플릿 파일
+            safe = os.path.basename(filename)
+            output_path = os.path.join(output_dir, safe)
+            if not os.path.isfile(output_path):
+                return jsonify({"error": f"파일이 없습니다: {safe}"}), 404
+            return send_file(
+                os.path.abspath(output_path),
+                mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                as_attachment=True,
+                download_name=safe,
+            )
+        # filename 없으면 전체 zip
+        import glob as _glob
+        import zipfile
+        xlsx_files = sorted(_glob.glob(os.path.join(output_dir, "result_*.xlsx")))
+        if not xlsx_files:
+            return jsonify({"error": "엑셀 파일이 없습니다."}), 404
+        if len(xlsx_files) == 1:
+            return send_file(
+                os.path.abspath(xlsx_files[0]),
+                mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                as_attachment=True,
+                download_name=os.path.basename(xlsx_files[0]),
+            )
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+            for f in xlsx_files:
+                zf.write(f, os.path.basename(f))
+        buf.seek(0)
         return send_file(
-            os.path.abspath(output_path),
-            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            buf,
+            mimetype="application/zip",
             as_attachment=True,
-            download_name="result_reviewed.xlsx",
+            download_name="ocr_results.zip",
         )
 
     # ── API: Active Learning 통계 ──

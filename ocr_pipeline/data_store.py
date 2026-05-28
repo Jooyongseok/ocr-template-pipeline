@@ -116,6 +116,18 @@ class DataStore:
                 docs.append(fname.replace(".json", ""))
         return sorted(docs)
 
+    def delete_document(self, doc_id: str) -> bool:
+        """문서와 수정 이력을 삭제한다."""
+        path = self._doc_path(doc_id)
+        history_path = self._history_path(doc_id)
+        deleted = False
+        if os.path.exists(path):
+            os.remove(path)
+            deleted = True
+        if os.path.exists(history_path):
+            os.remove(history_path)
+        return deleted
+
     def save_field(self, doc_id: str, field_key: str, new_value: str,
                    edit_source: str = "manual_review") -> dict:
         """필드 값을 수정하고 즉시 저장한다. 수정 이력도 기록한다.
