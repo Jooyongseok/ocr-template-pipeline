@@ -192,6 +192,9 @@ class ModelRegistry:
 
 
 def _make_success(req: dict, r, engine_version: str) -> dict:
+    from .validator import strip_label_prefix
+    raw_text = r.text.strip()
+    clean_text = strip_label_prefix(raw_text)
     return {
         "request_id": req["request_id"],
         "document_id": req["document_id"],
@@ -199,9 +202,9 @@ def _make_success(req: dict, r, engine_version: str) -> dict:
         "page": req["page"],
         "field_key": req["field_key"],
         "field_type": req["field_type"],
-        "text": r.text,
-        "normalized_text": r.text.strip(),
-        "value": r.text.strip(),
+        "text": raw_text,
+        "normalized_text": clean_text,
+        "value": clean_text,
         "confidence": r.confidence,
         "candidates": r.candidates,
         "status": "ok",

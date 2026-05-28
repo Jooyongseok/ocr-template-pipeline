@@ -26,6 +26,9 @@ def generate_crops(template_path: str, pdf_path: str, work_dir: str, dpi: int = 
     requests = []
 
     for field in template["fields"]:
+        # 빈 key는 건너뛰기
+        if not field.get("key", "").strip():
+            continue
         page_num = field.get("page", 1)
         if page_num > len(doc):
             continue

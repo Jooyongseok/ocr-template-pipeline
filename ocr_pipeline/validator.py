@@ -6,6 +6,51 @@ import re
 CONF_OK = 0.80
 CONF_REVIEW = 0.50
 
+# OCR 결과에서 제거할 인쇄 라벨 패턴 (셀에 라벨+데이터가 함께 crop된 경우)
+LABEL_PREFIXES = [
+    "성명", "주민등록번호", "주민번호", "계좌번호(은행명)", "계좌번호",
+    "주소", "전화번호", "농업인번호", "농업인 번호", "농업경영체등록번호",
+    "경영정보변경일", "접수번호", "접수일자", "생년월일", "신청유형",
+    "주민등록표상", "주소지", "(마을명)", "마을명", "경영주와의 관계",
+    "관계", "성 명",
+]
+
+
+def strip_label_prefix(text: str) -> str:
+    """OCR 텍스트에서 인쇄 라벨 접두사를 제거한다.
+
+    공백 유무와 무관하게 매칭한다: "성명이경준" → "이경준"
+    """
+    stripped = text.strip()
+    # 공백 제거 버전으로도 매칭
+    no_space = stripped.replace(" ", "")
+    for label in sorted(LABEL_PREFIXES, key=len, reverse=True):
+        label_ns = label.replace(" ", "")
+        # 공백 포함 원본에서 매칭
+        if stripped.startswith(label):
+            stripped = stripped[len(label):].strip()
+            return stripped
+        # 공백 제거 버전에서 매칭
+        if no_space.startswith(label_ns) and len(no_space) > len(label_ns):
+            # 원본에서 라벨에 해당하는 문자 수 계산
+            consumed = 0
+            matched = 0
+            for ch in stripped:
+                if matched >= len(label_ns):
+                    break
+                if ch == ' ':
+                    consumed += 1
+                    continue
+                if ch == label_ns[matched]:
+                    matched += 1
+                    consumed += 1
+                else:
+                    break
+            if matched >= len(label_ns):
+                stripped = stripped[consumed:].strip()
+                return stripped
+    return stripped
+
 # 항상 검수 대상
 ALWAYS_REVIEW_TYPES = {"resident_number", "account"}
 
